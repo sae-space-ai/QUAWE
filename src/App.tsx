@@ -20,7 +20,10 @@ import { Station } from './types';
 import QuaweLogo from './components/QuaweLogo';
 import QuaweOriginal from './components/QuaweOriginal';
 import LocalStationsGrid from './components/LocalStationsGrid';
+import ThematicChannels from './components/ThematicChannels';
 import { localQuaweStations, getLocalStation, LocalQuaweStation } from './data/quaweStations';
+import { thematicChannels, ThematicChannel, filterTracksByChannel } from './data/thematicChannels';
+import { getAllThematicStations, ThematicStation } from './data/thematicStations';
 import { getUserTracks, getTrackStreamUrl } from './services/audiusApi';
 
 // ============================================
@@ -103,6 +106,8 @@ export default function App() {
   const [sleepTimerActive, setSleepTimerActive] = useState(false);
   const [sleepTimerCountdown, setSleepTimerCountdown] = useState<number | null>(null);
   const [showLocalStations, setShowLocalStations] = useState(false);
+  const [showThematicChannels, setShowThematicChannels] = useState(false);
+  const [selectedThematicChannel, setSelectedThematicChannel] = useState<ThematicChannel | null>(null);
 
   const {
     currentStation,
@@ -182,6 +187,28 @@ export default function App() {
       return streamUrl;
     } catch (error) {
       console.error('Error getting Audius stream:', error);
+      return null;
+    }
+  };
+
+  // Función para obtener URL de streaming de Audius filtrada por canal temático
+  const getAudiusStreamUrlByChannel = async (channel: ThematicChannel): Promise<string | null> => {
+    try {
+      const allTracks = await getUserTracks('profmanuelgago', 50);
+      if (allTracks.length === 0) return null;
+      
+      // Filtrar tracks por canal temático
+      const filteredTracks = filterTracksByChannel(allTracks, channel);
+      
+      // Si no hay tracks del canal, usar todos los tracks
+      const tracksToUse = filteredTracks.length > 0 ? filteredTracks : allTracks;
+      
+      // Seleccionar un track aleatorio
+      const randomTrack = tracksToUse[Math.floor(Math.random() * tracksToUse.length)];
+      const streamUrl = await getTrackStreamUrl(randomTrack.id);
+      return streamUrl;
+    } catch (error) {
+      console.error('Error getting Audius stream by channel:', error);
       return null;
     }
   };
@@ -320,6 +347,40 @@ export default function App() {
     }
   };
 
+  const handleThematicChannelSelect = (channel: ThematicChannel) => {
+    setSelectedThematicChannel(channel);
+  };
+
+  const handleThematicStationClick = async (thematicStation: ThematicStation) => {
+    // Al hacer clic en una emisora temática, reproducir música filtrada por canal
+    setShowThematicChannels(false);
+    
+    // Obtener el canal temático
+    const channel = thematicChannels.find(c => c.id === thematicStation.channelId);
+    if (!channel) {
+      console.error('Canal temático no encontrado');
+      return;
+    }
+    
+    // Obtener URL de streaming de Audius filtrada por canal
+    const streamUrl = await getAudiusStreamUrlByChannel(channel);
+    
+    if (streamUrl) {
+      // Crear una copia de la estación con la URL de streaming
+      const stationWithStream: Station = {
+        ...thematicStation.station,
+        url: streamUrl,
+        url_resolved: streamUrl,
+      };
+      
+      // Establecer como estación actual y reproducir
+      setCurrentStation(stationWithStream);
+      setIsPlaying(true);
+    } else {
+      console.error('No se pudo obtener la URL de streaming de Audius para el canal temático');
+    }
+  };
+
   const handleSendChatMessage = () => {
     if (!newChatMessage.trim()) return;
     const newMsg = {
@@ -362,6 +423,7 @@ export default function App() {
               <button
                 onClick={() => {
                   setShowLocalStations(!showLocalStations);
+                  setShowThematicChannels(false);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showLocalStations
@@ -370,6 +432,21 @@ export default function App() {
                 }`}
               >
                 🌍 Red Local
+              </button>
+
+              {/* Toggle Canales Temáticos */}
+              <button
+                onClick={() => {
+                  setShowThematicChannels(!showThematicChannels);
+                  setShowLocalStations(false);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  showThematicChannels
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/30'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                }`}
+              >
+                🎵 Temáticos
               </button>
             </motion.div>
 
@@ -391,7 +468,14 @@ export default function App() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {showLocalStations ? (
+        {showThematicChannels ? (
+          // Canales Temáticos
+          <ThematicChannels
+            onChannelSelect={handleThematicChannelSelect}
+            onStationSelect={handleThematicStationClick}
+            selectedChannel={selectedThematicChannel}
+          />
+        ) : showLocalStations ? (
           // Red Quawe Local - 100 ciudades geolocalizadas
           <LocalStationsGrid
             stations={localQuaweStations}
