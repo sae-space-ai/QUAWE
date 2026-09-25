@@ -145,23 +145,64 @@ export default function ProductCatalog() {
         </div>
       </div>
 
+      {/* Sección especial de libros del autor */}
+      {selectedCategory === 'all' && (
+        <div className="rounded-2xl bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10 backdrop-blur-xl border border-white/10 p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="text-4xl">📚</div>
+            <div>
+              <h3 className="text-xl font-bold text-white">Libros del Autor</h3>
+              <p className="text-sm text-gray-400">Catálogo completo de Prof. Manuel Gago Fernández</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-300 mb-4">
+            Obtén los libros digitales del autor escuchando Radio Quawe. Todos los libros están disponibles en Amazon y ahora puedes canjearlos con tus puntos.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white/5 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-white">10</p>
+              <p className="text-xs text-gray-400">Libros</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-white">4</p>
+              <p className="text-xs text-gray-400">Bestsellers</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-white">4.6</p>
+              <p className="text-xs text-gray-400">Valoración media</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-3 text-center">
+              <p className="text-2xl font-bold text-white">1,159</p>
+              <p className="text-xs text-gray-400">Reseñas totales</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Grid de productos */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredProducts.map((product, index) => {
           const canAfford = userPoints >= product.pointsCost;
           const hasStock = product.stock > 0;
+          const isBook = product.category === 'libros';
 
           return (
             <motion.div
               key={product.id}
-              className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6 hover:bg-white/10 transition-all"
+              className={`rounded-2xl backdrop-blur-xl border p-6 hover:bg-white/10 transition-all ${
+                isBook 
+                  ? 'bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/30' 
+                  : 'bg-white/5 border-white/10'
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               whileHover={{ scale: 1.02 }}
             >
               {/* Imagen del producto */}
-              <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center">
+              <div className={`w-full h-48 mb-4 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center ${
+                isBook ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20' : ''
+              }`}>
                 {product.image.startsWith('http') ? (
                   <img 
                     src={product.image} 
@@ -180,20 +221,59 @@ export default function ProductCatalog() {
                 {/* Información del producto */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white">{product.name}</h3>
+                    <h3 className={`text-lg font-bold ${isBook ? 'text-blue-300' : 'text-white'}`}>{product.name}</h3>
                     <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-gray-300">
                       {product.brand}
                     </span>
                   </div>
+                  
+                  {/* Subtítulo para libros */}
+                  {isBook && product.bookMetadata?.subtitle && (
+                    <p className="text-xs text-gray-400 italic">{product.bookMetadata.subtitle}</p>
+                  )}
+                  
                   <p className="text-sm text-gray-400">{product.description}</p>
                   
+                  {/* Información adicional para libros */}
+                  {isBook && product.bookMetadata && (
+                    <div className="space-y-1 pt-2 border-t border-white/10">
+                      {product.bookMetadata.rating && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">Valoración:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-yellow-400">★</span>
+                            <span className="text-xs font-semibold text-white">{product.bookMetadata.rating}/5</span>
+                            {product.bookMetadata.reviews && (
+                              <span className="text-xs text-gray-400">({product.bookMetadata.reviews} reseñas)</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {product.bookMetadata.pages && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">Páginas:</span>
+                          <span className="text-xs font-semibold text-white">{product.bookMetadata.pages}</span>
+                        </div>
+                      )}
+                      {product.bookMetadata.bestseller && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 font-semibold">
+                            ⭐ Bestseller
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   {/* Stock */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Stock:</span>
-                    <span className={`text-xs font-semibold ${hasStock ? 'text-green-400' : 'text-red-400'}`}>
-                      {hasStock ? `${product.stock} disponibles` : 'Agotado'}
-                    </span>
-                  </div>
+                  {!isBook && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500">Stock:</span>
+                      <span className={`text-xs font-semibold ${hasStock ? 'text-green-400' : 'text-red-400'}`}>
+                        {hasStock ? `${product.stock} disponibles` : 'Agotado'}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Precio real */}
                   <div className="flex items-center justify-between">
@@ -222,13 +302,29 @@ export default function ProductCatalog() {
                 onClick={() => handleRedeemClick(product)}
                 disabled={!canAfford || !hasStock}
                 className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                  canAfford && hasStock
+                  isBook
+                    ? canAfford && hasStock
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-lg hover:shadow-blue-500/30'
+                      : 'bg-white/5 text-gray-500 cursor-not-allowed'
+                    : canAfford && hasStock
                     ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white hover:shadow-lg hover:shadow-orange-500/30'
                     : 'bg-white/5 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                {!hasStock ? 'Agotado' : !canAfford ? 'Puntos insuficientes' : 'Canjear Producto'}
+                {!hasStock ? 'Agotado' : !canAfford ? 'Puntos insuficientes' : isBook ? 'Canjear Libro' : 'Canjear Producto'}
               </button>
+              
+              {/* Enlace a Amazon para libros */}
+              {isBook && product.bookMetadata?.amazonUrl && (
+                <a
+                  href={product.bookMetadata.amazonUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-2 text-center text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Ver en Amazon →
+                </a>
+              )}
             </motion.div>
           );
         })}
@@ -268,10 +364,40 @@ export default function ProductCatalog() {
 
               {/* Información del producto */}
               <div className="text-center mb-6">
-                <div className="text-6xl mb-4">{selectedProduct.image}</div>
-                <h4 className="text-lg font-bold text-white mb-1">{selectedProduct.name}</h4>
+                <div className={`text-6xl mb-4 ${selectedProduct.category === 'libros' ? 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl p-4' : ''}`}>
+                  {selectedProduct.image}
+                </div>
+                <h4 className={`text-lg font-bold mb-1 ${selectedProduct.category === 'libros' ? 'text-blue-300' : 'text-white'}`}>
+                  {selectedProduct.name}
+                </h4>
+                {selectedProduct.category === 'libros' && selectedProduct.bookMetadata?.subtitle && (
+                  <p className="text-xs text-gray-400 italic mb-1">{selectedProduct.bookMetadata.subtitle}</p>
+                )}
                 <p className="text-sm text-gray-400">{selectedProduct.brand}</p>
                 <p className="text-sm text-gray-400 mt-2">{selectedProduct.description}</p>
+                
+                {/* Información adicional para libros */}
+                {selectedProduct.category === 'libros' && selectedProduct.bookMetadata && (
+                  <div className="mt-3 space-y-1">
+                    {selectedProduct.bookMetadata.rating && (
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="text-yellow-400">★</span>
+                        <span className="text-sm font-semibold text-white">{selectedProduct.bookMetadata.rating}/5</span>
+                        {selectedProduct.bookMetadata.reviews && (
+                          <span className="text-xs text-gray-400">({selectedProduct.bookMetadata.reviews} reseñas)</span>
+                        )}
+                      </div>
+                    )}
+                    {selectedProduct.bookMetadata.pages && (
+                      <p className="text-xs text-gray-400">{selectedProduct.bookMetadata.pages} páginas</p>
+                    )}
+                    {selectedProduct.bookMetadata.bestseller && (
+                      <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 font-semibold">
+                        ⭐ Bestseller
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Resumen del canje */}
@@ -320,6 +446,18 @@ export default function ProductCatalog() {
                       {redeemMessage.message}
                     </p>
                   </div>
+                  
+                  {/* Enlace a Amazon para libros canjeados */}
+                  {redeemMessage.success && selectedProduct.category === 'libros' && selectedProduct.bookMetadata?.amazonUrl && (
+                    <a
+                      href={selectedProduct.bookMetadata.amazonUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 block text-center py-2 px-4 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-300 text-sm font-semibold transition-all"
+                    >
+                      📖 Descargar en Amazon →
+                    </a>
+                  )}
                 </motion.div>
               )}
 

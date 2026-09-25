@@ -39,6 +39,7 @@ import UserProfile from './components/UserProfile';
 import AuthModal from './components/AuthModal';
 import PremiumModal from './components/PremiumModal';
 import AdShowcase from './components/AdShowcase';
+import AuthorBooksShowcase from './components/AuthorBooksShowcase';
 import { earnPointsForListening } from './services/pointsSystem';
 import { startAdScheduler, stopAdScheduler, pauseAdScheduler, resumeAdScheduler } from './services/adScheduler';
 import { getCurrentUser, startListeningSession, stopListeningSession } from './services/authSystem';
@@ -136,6 +137,7 @@ export default function App() {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showAdShowcase, setShowAdShowcase] = useState(false);
+  const [showAuthorBooks, setShowAuthorBooks] = useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(!!getCurrentUser());
   const [isPremium, setIsPremium] = useState(false);
 
@@ -791,6 +793,23 @@ export default function App() {
                   >
                     🎁 Escaparate
                   </button>
+                  <button
+                    onClick={() => {
+                      setShowAuthorBooks(!showAuthorBooks);
+                      setShowLocalStations(false);
+                      setShowThematicChannels(false);
+                      setShowPointsDashboard(false);
+                      setShowProductCatalog(false);
+                      setShowUserProfile(false);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                      showAuthorBooks
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                    }`}
+                  >
+                    📚 Libros
+                  </button>
                 </>
               ) : (
                 <button
@@ -820,7 +839,10 @@ export default function App() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {showUserProfile ? (
+        {showAuthorBooks ? (
+          // Catálogo de Libros del Autor
+          <AuthorBooksShowcase />
+        ) : showUserProfile ? (
           // Perfil de Usuario
           <UserProfile onLogout={() => {
             setShowUserProfile(false);

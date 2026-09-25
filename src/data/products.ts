@@ -5,7 +5,7 @@ export interface Product {
   id: string;
   brand: string;
   name: string;
-  category: 'zapatos' | 'joyas' | 'bisuteria' | 'ropa' | 'accesorios' | 'tecnologia' | 'hogar';
+  category: 'zapatos' | 'joyas' | 'bisuteria' | 'ropa' | 'accesorios' | 'tecnologia' | 'hogar' | 'libros';
   description: string;
   pointsCost: number;
   stock: number;
@@ -19,6 +19,19 @@ export interface Product {
   features: string[]; // Características del producto
   colors?: string[]; // Colores disponibles
   sizes?: string[]; // Tallas disponibles
+  bookMetadata?: {
+    subtitle?: string;
+    author?: string;
+    amazonUrl?: string;
+    asin?: string;
+    publishDate?: string;
+    tags?: string[];
+    isbn?: string;
+    pages?: number;
+    rating?: number;
+    reviews?: number;
+    bestseller?: boolean;
+  };
 }
 
 // Base de datos de productos reales de marcas conocidas
@@ -381,6 +394,289 @@ export const productsDatabase: Product[] = [
     estimatedTime: '1 mes (2h/día)',
     features: ['Set de 3 piezas', 'Fundas extraíbles', 'Relleno incluido', 'Diseños étnicos'],
     colors: ['Tonos tierra', 'Azules', 'Multicolor']
+  },
+
+  // ==================== LIBROS DEL AUTOR ====================
+  // Libros de Prof. Manuel Gago Fernández publicados en Amazon
+  {
+    id: 'book-001',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Desarrollo Web Moderno con React y TypeScript',
+    category: 'libros',
+    description: 'Aprende a construir aplicaciones web modernas usando React, TypeScript y las mejores prácticas de desarrollo. Incluye proyectos prácticos y ejemplos de código.',
+    pointsCost: 1125,
+    stock: 999,
+    image: '📘',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Desarrollo Web Moderno con React y TypeScript" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€29.99',
+    estimatedTime: '2 semanas (2h/día)',
+    features: ['450 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.5/5', '127 reseñas', '⭐ Bestseller'],
+    bookMetadata: {
+      subtitle: 'Guía completa para desarrolladores',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2024-01-15',
+      tags: ['react', 'typescript', 'web development', 'programming'],
+      pages: 450,
+      rating: 4.5,
+      reviews: 127,
+      bestseller: true
+    }
+  },
+  {
+    id: 'book-002',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Inteligencia Artificial para Todos',
+    category: 'libros',
+    description: 'Una introducción accesible al mundo de la IA. Aprende los fundamentos, algoritmos de machine learning y cómo implementar soluciones de IA en proyectos reales.',
+    pointsCost: 937,
+    stock: 999,
+    image: '🤖',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Inteligencia Artificial para Todos" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€24.99',
+    estimatedTime: '1.5 semanas (2h/día)',
+    features: ['380 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.7/5', '89 reseñas', '⭐ Bestseller'],
+    bookMetadata: {
+      subtitle: 'De conceptos básicos a aplicaciones prácticas',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2024-03-20',
+      tags: ['artificial intelligence', 'machine learning', 'AI', 'data science'],
+      pages: 380,
+      rating: 4.7,
+      reviews: 89,
+      bestseller: true
+    }
+  },
+  {
+    id: 'book-003',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Node.js Avanzado',
+    category: 'libros',
+    description: 'Domina Node.js para crear backends robustos y escalables. Aprende sobre APIs REST, bases de datos, autenticación, testing y despliegue en la nube.',
+    pointsCost: 1312,
+    stock: 999,
+    image: '⚙️',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Node.js Avanzado" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€34.99',
+    estimatedTime: '2.5 semanas (2h/día)',
+    features: ['520 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.6/5', '156 reseñas'],
+    bookMetadata: {
+      subtitle: 'Backend escalable y APIs REST',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2023-11-10',
+      tags: ['nodejs', 'backend', 'api', 'javascript', 'server'],
+      pages: 520,
+      rating: 4.6,
+      reviews: 156,
+      bestseller: false
+    }
+  },
+  {
+    id: 'book-004',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Python para Ciencia de Datos',
+    category: 'libros',
+    description: 'Aprende Python aplicado a la ciencia de datos. Desde pandas y numpy hasta scikit-learn y tensorflow. Incluye proyectos prácticos con datasets reales.',
+    pointsCost: 1237,
+    stock: 999,
+    image: '🐍',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Python para Ciencia de Datos" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€32.99',
+    estimatedTime: '2.2 semanas (2h/día)',
+    features: ['480 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.8/5', '203 reseñas', '⭐ Bestseller'],
+    bookMetadata: {
+      subtitle: 'Análisis, visualización y machine learning',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2024-02-05',
+      tags: ['python', 'data science', 'pandas', 'machine learning', 'analytics'],
+      pages: 480,
+      rating: 4.8,
+      reviews: 203,
+      bestseller: true
+    }
+  },
+  {
+    id: 'book-005',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Diseño UX/UI Profesional',
+    category: 'libros',
+    description: 'Domina el diseño de experiencias de usuario. Aprende principios de UX, herramientas como Figma, diseño responsivo y crea portfolios profesionales.',
+    pointsCost: 1050,
+    stock: 999,
+    image: '🎨',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Diseño UX/UI Profesional" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€27.99',
+    estimatedTime: '1.8 semanas (2h/día)',
+    features: ['340 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.4/5', '78 reseñas'],
+    bookMetadata: {
+      subtitle: 'Principios, herramientas y casos de estudio',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2024-04-12',
+      tags: ['UX', 'UI', 'design', 'figma', 'user experience'],
+      pages: 340,
+      rating: 4.4,
+      reviews: 78,
+      bestseller: false
+    }
+  },
+  {
+    id: 'book-006',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'DevOps y CI/CD',
+    category: 'libros',
+    description: 'Aprende DevOps desde cero. Docker, Kubernetes, Jenkins, GitHub Actions y las mejores prácticas para automatización y despliegue continuo.',
+    pointsCost: 1200,
+    stock: 999,
+    image: '🚀',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "DevOps y CI/CD" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€31.99',
+    estimatedTime: '2.2 semanas (2h/día)',
+    features: ['410 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.5/5', '112 reseñas'],
+    bookMetadata: {
+      subtitle: 'Automatización y despliegue continuo',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2023-09-28',
+      tags: ['devops', 'docker', 'kubernetes', 'ci/cd', 'automation'],
+      pages: 410,
+      rating: 4.5,
+      reviews: 112,
+      bestseller: false
+    }
+  },
+  {
+    id: 'book-007',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Blockchain y Web3',
+    category: 'libros',
+    description: 'Explora el mundo de blockchain y Web3. Aprende sobre criptomonedas, smart contracts con Solidity, y cómo construir aplicaciones descentralizadas.',
+    pointsCost: 1125,
+    stock: 999,
+    image: '⛓️',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Blockchain y Web3" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€29.99',
+    estimatedTime: '2 semanas (2h/día)',
+    features: ['360 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.3/5', '67 reseñas'],
+    bookMetadata: {
+      subtitle: 'Criptomonedas, smart contracts y DApps',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2024-05-18',
+      tags: ['blockchain', 'web3', 'cryptocurrency', 'ethereum', 'solidity'],
+      pages: 360,
+      rating: 4.3,
+      reviews: 67,
+      bestseller: false
+    }
+  },
+  {
+    id: 'book-008',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Ciberseguridad Práctica',
+    category: 'libros',
+    description: 'Aprende ciberseguridad desde una perspectiva práctica. Ethical hacking, análisis de vulnerabilidades, criptografía y mejores prácticas de seguridad.',
+    pointsCost: 1275,
+    stock: 999,
+    image: '🔒',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Ciberseguridad Práctica" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€33.99',
+    estimatedTime: '2.3 semanas (2h/día)',
+    features: ['440 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.6/5', '94 reseñas'],
+    bookMetadata: {
+      subtitle: 'Protege tus aplicaciones y sistemas',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2024-06-22',
+      tags: ['cybersecurity', 'hacking', 'security', 'encryption', 'ethical hacking'],
+      pages: 440,
+      rating: 4.6,
+      reviews: 94,
+      bestseller: false
+    }
+  },
+  {
+    id: 'book-009',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Arquitectura de Software Moderna',
+    category: 'libros',
+    description: 'Domina la arquitectura de software moderna. Microservicios, patrones de diseño, escalabilidad, y cómo construir sistemas distribuidos robustos.',
+    pointsCost: 1387,
+    stock: 999,
+    image: '🏗️',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Arquitectura de Software Moderna" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€36.99',
+    estimatedTime: '2.5 semanas (2h/día)',
+    features: ['490 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.7/5', '145 reseñas', '⭐ Bestseller'],
+    bookMetadata: {
+      subtitle: 'Microservicios, patrones y escalabilidad',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2023-12-05',
+      tags: ['architecture', 'microservices', 'patterns', 'scalability', 'distributed systems'],
+      pages: 490,
+      rating: 4.7,
+      reviews: 145,
+      bestseller: true
+    }
+  },
+  {
+    id: 'book-010',
+    brand: 'Prof. Manuel Gago Fernández',
+    name: 'Mobile Development con Flutter',
+    category: 'libros',
+    description: 'Crea aplicaciones móviles profesionales para iOS y Android con Flutter. Aprende Dart, widgets, estado, APIs y publicación en tiendas.',
+    pointsCost: 1162,
+    stock: 999,
+    image: '📱',
+    brandLogo: '📚',
+    sponsorMessage: 'Libro "Mobile Development con Flutter" del autor Prof. Manuel Gago Fernández. Escucha Radio Quawe y gana puntos para obtener tu copia digital.',
+    channel: 'all',
+    retailPrice: '€30.99',
+    estimatedTime: '2.1 semanas (2h/día)',
+    features: ['420 páginas', 'Formato: ebook', 'Idioma: Español', 'Valoración: 4.5/5', '88 reseñas'],
+    bookMetadata: {
+      subtitle: 'Apps multiplataforma profesionales',
+      author: 'Prof. Manuel Gago Fernández',
+      amazonUrl: 'https://www.amazon.com/dp/XXXXXXXXX',
+      asin: 'XXXXXXXXX',
+      publishDate: '2024-07-10',
+      tags: ['flutter', 'mobile', 'dart', 'ios', 'android', 'cross-platform'],
+      pages: 420,
+      rating: 4.5,
+      reviews: 88,
+      bestseller: false
+    }
   }
 ];
 
@@ -427,6 +723,7 @@ export function reduceStock(productId: string): boolean {
 
 // Categorías disponibles
 export const categories = [
+  { id: 'libros', name: 'Libros del Autor', emoji: '📚' },
   { id: 'zapatos', name: 'Zapatos', emoji: '👟' },
   { id: 'joyas', name: 'Joyas', emoji: '💎' },
   { id: 'bisuteria', name: 'Bisutería', emoji: '✨' },
@@ -446,6 +743,7 @@ export const pointsRanges = [
 
 // Marcas patrocinadoras
 export const sponsorBrands = [
+  { name: 'Prof. Manuel Gago Fernández', logo: '📚', category: 'libros' },
   { name: 'Nike', logo: '✓', category: 'zapatos' },
   { name: 'Adidas', logo: '✓', category: 'zapatos' },
   { name: 'Puma', logo: '✓', category: 'zapatos' },
