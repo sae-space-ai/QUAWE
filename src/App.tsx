@@ -26,6 +26,9 @@ import { thematicChannels, ThematicChannel, filterTracksByChannel, searchInAlbum
 import { getAllThematicStations, ThematicStation } from './data/thematicStations';
 import { getUserTracks, getTrackStreamUrl, getUserAlbums, getUserPlaylists, getAlbumTracks, getPlaylistTracks } from './services/audiusApi';
 import { getNextTrack, addToHistory, getQueueStats } from './services/queueManager';
+import { getRandomAdForCity, hasAdsForCity, LocalAd } from './data/localAds';
+import { playLocalAd, stopLocalAd, isAdPlaying } from './services/adPlayer';
+import { Megaphone } from 'lucide-react';
 
 // ============================================
 // Visualizador de Audio
@@ -109,6 +112,9 @@ export default function App() {
   const [showLocalStations, setShowLocalStations] = useState(false);
   const [showThematicChannels, setShowThematicChannels] = useState(false);
   const [selectedThematicChannel, setSelectedThematicChannel] = useState<ThematicChannel | null>(null);
+  const [currentAd, setCurrentAd] = useState<LocalAd | null>(null);
+  const [isAdPlayingState, setIsAdPlayingState] = useState(false);
+  const [adCountdown, setAdCountdown] = useState(0);
 
   const {
     currentStation,
@@ -175,6 +181,63 @@ export default function App() {
 
     return () => clearInterval(timer);
   }, [sleepTimerActive, sleepTimerCountdown]);
+
+  // Función para reproducir anuncio local de 12 segundos
+  const playStationAd = async (city: string) => {
+    if (!hasAdsForCity(city)) {
+      console.log(`[Ad] No hay anuncios para ${city}`);
+      return false;
+    }
+
+    const ad = getRandomAdForCity(city);
+    if (!ad) return false;
+
+    setCurrentAd(ad);
+    setIsAdPlayingState(true);
+    setAdCountdown(12);
+
+    // Pausar música temporalmente
+    const wasPlaying = isPlaying;
+    if (wasPlaying) {
+      setIsPlaying(false);
+    }
+
+    // Iniciar countdown
+    const countdownInterval = setInterval(() => {
+      setAdCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Reproducir anuncio
+    await playLocalAd(ad, () => {
+      // Al finalizar el anuncio
+      clearInterval(countdownInterval);
+      setCurrentAd(null);
+      setIsAdPlayingState(false);
+      setAdCountdown(0);
+      
+      // Reanudar música si estaba sonando
+      if (wasPlaying) {
+        setIsPlaying(true);
+      }
+    });
+
+    return true;
+  };
+
+  // Función para saltar anuncio
+  const skipAd = () => {
+    stopLocalAd();
+    setCurrentAd(null);
+    setIsAdPlayingState(false);
+    setAdCountdown(0);
+    setIsPlaying(true);
+  };
 
   // Función para obtener URL de streaming de Audius
   const getAudiusStreamUrl = async (stationId?: string): Promise<string | null> => {
@@ -335,6 +398,12 @@ export default function App() {
       
       // Ocultar vista de red local
       setShowLocalStations(false);
+      
+      // Reproducir anuncio local si existe para esta ciudad
+      const city = station.state || station.name.split(' ').pop() || '';
+      if (city && hasAdsForCity(city)) {
+        await playStationAd(city);
+      }
       
       // Obtener URL de streaming de Audius con stationId para evitar repeticiones
       const streamUrl = await getAudiusStreamUrl(station.stationuuid);
@@ -539,6 +608,76 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
               >
+                {/* Overlay de Anuncio */}
+                <AnimatePresence>
+                  {isAdPlayingState && currentAd && (
+                    <motion.div
+                      className="absolute inset-0 z-50 bg-gradient-to-br from-amber-500/95 via-orange-500/95 to-red-500/95 backdrop-blur-xl flex flex-col items-center justify-center p-6"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <motion.div
+                        className="flex flex-col items-center gap-4 max-w-md"
+                        initial={{ y: 20 }}
+                        animate={{ y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <motion.div
+                          animate={{ 
+                            scale: [1, 1.1, 1],
+                            rotate: [0, 5, -5, 0]
+                          }}
+                          transition={{ 
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        >
+                          <Megaphone className="w-16 h-16 text-white" />
+                        </motion.div>
+                        
+                        <div className="text-center">
+                          <p className="text-xs text-white/80 uppercase tracking-wider mb-2">
+                            Anuncio Patrocinado
+                          </p>
+                          <h3 className="text-xl font-bold text-white mb-2">
+                            {currentAd.business}
+                          </h3>
+                          <p className="text-sm text-white/90 leading-relaxed">
+                            {currentAd.message}
+                          </p>
+                        </div>
+
+                        {/* Barra de progreso del anuncio */}
+                        <div className="w-full max-w-xs">
+                          <div className="flex items-center justify-between text-xs text-white/80 mb-2">
+                            <span>Anuncio</span>
+                            <span className="font-mono">{adCountdown}s</span>
+                          </div>
+                          <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+                            <motion.div
+                              className="h-full bg-white"
+                              initial={{ width: '100%' }}
+                              animate={{ width: '0%' }}
+                              transition={{ duration: 12, ease: 'linear' }}
+                              key={currentAd.id}
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={skipAd}
+                          className="mt-4 px-6 py-2 rounded-full bg-white/20 hover:bg-white/30 text-white text-sm font-medium transition-all"
+                        >
+                          Saltar Anuncio
+                        </button>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {currentStation && (
                 <>
                   <div className="flex items-start justify-between mb-4">
