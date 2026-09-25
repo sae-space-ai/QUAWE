@@ -7,6 +7,7 @@ import {
   Timer, Trash2, ExternalLink, Star, Zap, MessageCircle,
   Send, ChevronDown, Filter, RefreshCw
 } from 'lucide-react';
+import './utils/testPremium'; // Importar script de prueba
 import { useRadioStore } from './store/radioStore';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useAudioPlayer } from './hooks/useAudioPlayer';

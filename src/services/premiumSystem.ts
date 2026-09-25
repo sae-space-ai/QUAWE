@@ -45,77 +45,124 @@ export function getUserMembership(userId: string): PremiumMembership | null {
 
 // Suscribirse a membresía premium
 export function subscribeToPremium(userId: string, paymentMethod: string = 'card'): { success: boolean; message: string } {
-  const memberships = getAllMemberships();
-  
-  // Verificar si ya tiene una membresía activa
-  const existingMembership = memberships.find(m => m.userId === userId && m.isActive);
-  if (existingMembership && existingMembership.endDate > Date.now()) {
-    return { success: false, message: 'Ya tienes una membresía premium activa' };
+  try {
+    const memberships = getAllMemberships();
+    
+    // Verificar si ya tiene una membresía activa
+    const existingMembership = memberships.find(m => m.userId === userId && m.isActive);
+    if (existingMembership && existingMembership.endDate > Date.now()) {
+      return { success: false, message: 'Ya tienes una membresía premium activa' };
+    }
+    
+    // Crear nueva membresía
+    const startDate = Date.now();
+    const endDate = startDate + (30 * 24 * 60 * 60 * 1000); // 30 días
+    
+    const newMembership: PremiumMembership = {
+      userId,
+      startDate,
+      endDate,
+      isActive: true,
+      autoRenew: true,
+      paymentMethod
+    };
+    
+    // Remover membresías anteriores del usuario
+    const filteredMemberships = memberships.filter(m => m.userId !== userId);
+    filteredMemberships.push(newMembership);
+    saveAllMemberships(filteredMemberships);
+    
+    // Añadir puntos bonus al usuario y marcar como premium
+    const users = JSON.parse(localStorage.getItem('quawe_users') || '[]');
+    const userIndex = users.findIndex((u: User) => u.id === userId);
+    
+    if (userIndex !== -1) {
+      users[userIndex].points += POINTS_CONFIG.premiumMonthly.pointsBonus;
+      users[userIndex].isPremium = true;
+      users[userIndex].premiumStartDate = startDate;
+      users[userIndex].premiumEndDate = endDate;
+      localStorage.setItem('quawe_users', JSON.stringify(users));
+      
+      console.log('[Premium] Usuario suscrito exitosamente:', userId);
+      console.log('[Premium] Puntos bonus añadidos:', POINTS_CONFIG.premiumMonthly.pointsBonus);
+      console.log('[Premium] Membresía válida hasta:', new Date(endDate).toLocaleString());
+    } else {
+      console.error('[Premium] Usuario no encontrado:', userId);
+      return { success: false, message: 'Error: Usuario no encontrado' };
+    }
+    
+    return { 
+      success: true, 
+      message: `¡Bienvenido a Premium! Has recibido ${POINTS_CONFIG.premiumMonthly.pointsBonus.toLocaleString()} puntos de bienvenida. Tu membresía es válida por 30 días.` 
+    };
+  } catch (error) {
+    console.error('[Premium] Error al suscribirse:', error);
+    return { success: false, message: 'Error al procesar la suscripción. Inténtalo de nuevo.' };
   }
-  
-  // Crear nueva membresía
-  const startDate = Date.now();
-  const endDate = startDate + (30 * 24 * 60 * 60 * 1000); // 30 días
-  
-  const newMembership: PremiumMembership = {
-    userId,
-    startDate,
-    endDate,
-    isActive: true,
-    autoRenew: true,
-    paymentMethod
-  };
-  
-  // Remover membresías anteriores del usuario
-  const filteredMemberships = memberships.filter(m => m.userId !== userId);
-  filteredMemberships.push(newMembership);
-  saveAllMemberships(filteredMemberships);
-  
-  // Añadir puntos bonus al usuario
-  const users = JSON.parse(localStorage.getItem('quawe_users') || '[]');
-  const userIndex = users.findIndex((u: User) => u.id === userId);
-  
-  if (userIndex !== -1) {
-    users[userIndex].points += POINTS_CONFIG.premiumMonthly.pointsBonus;
-    users[userIndex].isPremium = true;
-    localStorage.setItem('quawe_users', JSON.stringify(users));
-  }
-  
-  return { 
-    success: true, 
-    message: `¡Bienvenido a Premium! Has recibido ${POINTS_CONFIG.premiumMonthly.pointsBonus} puntos de bienvenida. Tu membresía es válida por 30 días.` 
-  };
 }
 
 // Cancelar membresía premium
 export function cancelPremium(userId: string): { success: boolean; message: string } {
-  const memberships = getAllMemberships();
-  const membershipIndex = memberships.findIndex(m => m.userId === userId);
-  
-  if (membershipIndex === -1) {
-    return { success: false, message: 'No tienes una membresía premium' };
+  try {
+    const memberships = getAllMemberships();
+    const membershipIndex = memberships.findIndex(m => m.userId === userId);
+    
+    if (membershipIndex === -1) {
+      return { success: false, message: 'No tienes una membresía premium' };
+    }
+    
+    memberships[membershipIndex].isActive = false;
+    memberships[membershipIndex].autoRenew = false;
+    saveAllMemberships(memberships);
+    
+    // Actualizar usuario
+    const users = JSON.parse(localStorage.getItem('quawe_users') || '[]');
+    const userIndex = users.findIndex((u: User) => u.id === userId);
+    
+    if (userIndex !== -1) {
+      users[userIndex].isPremium = false;
+      users[userIndex].premiumStartDate = undefined;
+      users[userIndex].premiumEndDate = undefined;
+      localStorage.setItem('quawe_users', JSON.stringify(users));
+      
+      console.log('[Premium] Membresía cancelada para usuario:', userId);
+    } else {
+      console.error('[Premium] Usuario no encontrado al cancelar:', userId);
+      return { success: false, message: 'Error: Usuario no encontrado' };
+    }
+    
+    return { success: true, message: 'Tu membresía premium ha sido cancelada. Seguirás teniendo acceso hasta el final del período.' };
+  } catch (error) {
+    console.error('[Premium] Error al cancelar membresía:', error);
+    return { success: false, message: 'Error al cancelar la membresía. Inténtalo de nuevo.' };
   }
-  
-  memberships[membershipIndex].isActive = false;
-  memberships[membershipIndex].autoRenew = false;
-  saveAllMemberships(memberships);
-  
-  // Actualizar usuario
-  const users = JSON.parse(localStorage.getItem('quawe_users') || '[]');
-  const userIndex = users.findIndex((u: User) => u.id === userId);
-  
-  if (userIndex !== -1) {
-    users[userIndex].isPremium = false;
-    localStorage.setItem('quawe_users', JSON.stringify(users));
-  }
-  
-  return { success: true, message: 'Tu membresía premium ha sido cancelada. Seguirás teniendo acceso hasta el final del período.' };
 }
 
 // Verificar si el usuario es premium
 export function isUserPremium(userId: string): boolean {
-  const membership = getUserMembership(userId);
-  return membership ? membership.isActive : false;
+  try {
+    // Primero verificar en el objeto de usuario
+    const users = JSON.parse(localStorage.getItem('quawe_users') || '[]');
+    const user = users.find((u: User) => u.id === userId);
+    
+    if (user && user.isPremium === true) {
+      // Verificar si la membresía aún está activa
+      const membership = getUserMembership(userId);
+      if (membership && membership.isActive && membership.endDate > Date.now()) {
+        return true;
+      }
+      // Si la membresía expiró, actualizar el usuario
+      if (user.isPremium) {
+        user.isPremium = false;
+        localStorage.setItem('quawe_users', JSON.stringify(users));
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('[Premium] Error al verificar estado premium:', error);
+    return false;
+  }
 }
 
 // Obtener beneficios premium
@@ -159,10 +206,19 @@ export function autoRenewMembership(userId: string): boolean {
 
 // Calcular días restantes de membresía
 export function getMembershipDaysRemaining(userId: string): number {
-  const membership = getUserMembership(userId);
-  
-  if (!membership || !membership.isActive) return 0;
-  
-  const remaining = membership.endDate - Date.now();
-  return Math.max(0, Math.ceil(remaining / (24 * 60 * 60 * 1000)));
+  try {
+    const membership = getUserMembership(userId);
+    
+    if (!membership || !membership.isActive) return 0;
+    
+    const remaining = membership.endDate - Date.now();
+    const days = Math.max(0, Math.ceil(remaining / (24 * 60 * 60 * 1000)));
+    
+    console.log('[Premium] Días restantes para usuario', userId, ':', days);
+    
+    return days;
+  } catch (error) {
+    console.error('[Premium] Error al calcular días restantes:', error);
+    return 0;
+  }
 }

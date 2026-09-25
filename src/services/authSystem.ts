@@ -19,6 +19,9 @@ export interface User {
   level: number;
   achievements: string[];
   redeemedProducts: RedeemedProduct[];
+  isPremium?: boolean;
+  premiumStartDate?: number;
+  premiumEndDate?: number;
 }
 
 export interface RedeemedProduct {

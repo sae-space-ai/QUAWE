@@ -29,28 +29,47 @@ export default function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModa
 
   const handleSubscribe = async () => {
     const user = getCurrentUser();
-    if (!user) return;
+    if (!user) {
+      setMessage({ type: 'error', text: 'Debes iniciar sesión primero' });
+      return;
+    }
 
     setLoading(true);
     setMessage(null);
 
-    // Simular procesamiento de pago
+    console.log('[PremiumModal] Iniciando suscripción para usuario:', user.id);
+
+    // Simular procesamiento de pago (1.5 segundos)
     setTimeout(() => {
+      console.log('[PremiumModal] Procesando pago...');
+      
       const result = subscribeToPremium(user.id, 'card');
+      
+      console.log('[PremiumModal] Resultado de suscripción:', result);
       
       if (result.success) {
         setMessage({ type: 'success', text: result.message });
         setIsPremium(true);
         setDaysRemaining(30);
+        
+        // Actualizar estado del usuario en localStorage
+        const users = JSON.parse(localStorage.getItem('quawe_users') || '[]');
+        const userIndex = users.findIndex((u: any) => u.id === user.id);
+        if (userIndex !== -1) {
+          users[userIndex].isPremium = true;
+          localStorage.setItem('quawe_users', JSON.stringify(users));
+        }
+        
+        // Cerrar modal después de 2 segundos
         setTimeout(() => {
           onSuccess();
           onClose();
         }, 2000);
       } else {
+        console.error('[PremiumModal] Error en suscripción:', result.message);
         setMessage({ type: 'error', text: result.message });
+        setLoading(false);
       }
-      
-      setLoading(false);
     }, 1500);
   };
 
