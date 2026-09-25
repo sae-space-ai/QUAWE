@@ -25,6 +25,7 @@ import { localQuaweStations, getLocalStation, LocalQuaweStation } from './data/q
 import { thematicChannels, ThematicChannel, filterTracksByChannel, searchInAlbumsAndPlaylists } from './data/thematicChannels';
 import { getAllThematicStations, ThematicStation } from './data/thematicStations';
 import { getUserTracks, getTrackStreamUrl, getUserAlbums, getUserPlaylists, getAlbumTracks, getPlaylistTracks } from './services/audiusApi';
+import { getNextTrack, addToHistory, getQueueStats } from './services/queueManager';
 
 // ============================================
 // Visualizador de Audio
@@ -176,14 +177,28 @@ export default function App() {
   }, [sleepTimerActive, sleepTimerCountdown]);
 
   // Función para obtener URL de streaming de Audius
-  const getAudiusStreamUrl = async (): Promise<string | null> => {
+  const getAudiusStreamUrl = async (stationId?: string): Promise<string | null> => {
     try {
-      const tracks = await getUserTracks('profmanuelgago', 10);
+      const tracks = await getUserTracks('profmanuelgago', 100);
       if (tracks.length === 0) return null;
       
-      // Seleccionar un track aleatorio
-      const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
-      const streamUrl = await getTrackStreamUrl(randomTrack.id);
+      // Si no hay stationId, usar uno por defecto
+      const id = stationId || 'default-station';
+      
+      // Obtener siguiente track de la cola (evita repeticiones)
+      const nextTrack = await getNextTrack(id, tracks);
+      
+      if (!nextTrack) {
+        console.error('[Stream] No hay tracks disponibles en la cola');
+        return null;
+      }
+      
+      const streamUrl = await getTrackStreamUrl(nextTrack.id);
+      
+      // Log de estadísticas de la cola
+      const stats = getQueueStats(id);
+      console.log(`[Stream] Cola ${id}: ${stats.queueSize} en cola, ${stats.historySize} en historial`);
+      
       return streamUrl;
     } catch (error) {
       console.error('Error getting Audius stream:', error);
@@ -192,7 +207,7 @@ export default function App() {
   };
 
   // Función para obtener URL de streaming de Audius filtrada por canal temático
-  const getAudiusStreamUrlByChannel = async (channel: ThematicChannel): Promise<string | null> => {
+  const getAudiusStreamUrlByChannel = async (channel: ThematicChannel, stationId?: string): Promise<string | null> => {
     try {
       // 1. Buscar en tracks directos
       const allTracks = await getUserTracks('profmanuelgago', 100);
@@ -222,11 +237,20 @@ export default function App() {
         return null;
       }
       
-      // 5. Seleccionar un track aleatorio
-      const randomTrack = tracksToUse[Math.floor(Math.random() * tracksToUse.length)];
-      const streamUrl = await getTrackStreamUrl(randomTrack.id);
+      // 5. Usar sistema de colas para evitar repeticiones
+      const id = stationId || `channel-${channel.id}`;
+      const nextTrack = await getNextTrack(id, tracksToUse);
       
-      console.log(`Canal ${channel.name}: ${tracksToUse.length} tracks encontrados`);
+      if (!nextTrack) {
+        console.error('[Stream] No hay tracks disponibles en la cola del canal');
+        return null;
+      }
+      
+      const streamUrl = await getTrackStreamUrl(nextTrack.id);
+      
+      // Log de estadísticas de la cola
+      const stats = getQueueStats(id);
+      console.log(`[Stream] Canal ${channel.name} (${id}): ${stats.queueSize} en cola, ${stats.historySize} en historial`);
       
       return streamUrl;
     } catch (error) {
@@ -312,8 +336,8 @@ export default function App() {
       // Ocultar vista de red local
       setShowLocalStations(false);
       
-      // Obtener URL de streaming de Audius
-      const streamUrl = await getAudiusStreamUrl();
+      // Obtener URL de streaming de Audius con stationId para evitar repeticiones
+      const streamUrl = await getAudiusStreamUrl(station.stationuuid);
       
       if (streamUrl) {
         // Crear una copia de la estación con la URL de streaming
@@ -350,8 +374,8 @@ export default function App() {
     // Al hacer clic en una estación local, reproducir música de Audius
     setShowLocalStations(false);
     
-    // Obtener URL de streaming de Audius
-    const streamUrl = await getAudiusStreamUrl();
+    // Obtener URL de streaming de Audius con stationId para evitar repeticiones
+    const streamUrl = await getAudiusStreamUrl(localStation.station.stationuuid);
     
     if (streamUrl) {
       // Crear una copia de la estación con la URL de streaming
@@ -384,8 +408,8 @@ export default function App() {
       return;
     }
     
-    // Obtener URL de streaming de Audius filtrada por canal
-    const streamUrl = await getAudiusStreamUrlByChannel(channel);
+    // Obtener URL de streaming de Audius filtrada por canal con stationId para evitar repeticiones
+    const streamUrl = await getAudiusStreamUrlByChannel(channel, thematicStation.station.stationuuid);
     
     if (streamUrl) {
       // Crear una copia de la estación con la URL de streaming
