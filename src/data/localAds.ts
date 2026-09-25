@@ -12,6 +12,7 @@ export interface LocalAd {
 }
 
 // Base de datos de anuncios por ciudad
+// Incluye tanto negocios locales como grandes empresas B2B
 export const localAdsDatabase: Record<string, LocalAd[]> = {
   // ESPAÑA
   'Madrid': [
@@ -41,6 +42,52 @@ export const localAdsDatabase: Record<string, LocalAd[]> = {
       duration: 12,
       city: 'Madrid',
       country: 'España'
+    },
+    // Grandes empresas B2B
+    {
+      id: 'mad-b2b-1',
+      business: 'El Corte Inglés',
+      category: 'Retail B2B/B2C',
+      message: 'Esta música está patrocinada por El Corte Inglés. La mayor empresa de retail de España con soluciones B2B para empresas. elcorteingles.es/empresas',
+      duration: 12,
+      city: 'Madrid',
+      country: 'España'
+    },
+    {
+      id: 'mad-b2b-2',
+      business: 'Amazon Business',
+      category: 'E-commerce B2B',
+      message: 'Quawe Madrid es posible gracias a Amazon Business. La plataforma B2B líder mundial para compras empresariales. amazon.es/business',
+      duration: 12,
+      city: 'Madrid',
+      country: 'España'
+    },
+    {
+      id: 'mad-b2b-3',
+      business: 'SAP España',
+      category: 'Software Empresarial B2B',
+      message: 'Esta música está patrocinada por SAP. El software de gestión empresarial líder mundial. Transforma tu negocio con SAP. sap.com/es',
+      duration: 12,
+      city: 'Madrid',
+      country: 'España'
+    },
+    {
+      id: 'mad-b2b-4',
+      business: 'Microsoft 365',
+      category: 'Productividad B2B',
+      message: 'Quawe Madrid es posible gracias a Microsoft 365. Productividad y colaboración para empresas. Office, Teams, Azure. microsoft.com/es-es/microsoft-365',
+      duration: 12,
+      city: 'Madrid',
+      country: 'España'
+    },
+    {
+      id: 'mad-b2b-5',
+      business: 'Salesforce',
+      category: 'CRM B2B',
+      message: 'Esta música está patrocinada por Salesforce. El CRM líder mundial para gestionar relaciones con clientes. salesforce.com/es',
+      duration: 12,
+      city: 'Madrid',
+      country: 'España'
     }
   ],
   'Barcelona': [
@@ -67,6 +114,34 @@ export const localAdsDatabase: Record<string, LocalAd[]> = {
       business: 'Clínica Dental Somriure',
       category: 'Salud',
       message: 'La música que escuchas es posible gracias a Clínica Dental Somriure. Tu sonrisa es nuestra prioridad. Primera visita gratuita',
+      duration: 12,
+      city: 'Barcelona',
+      country: 'España'
+    },
+    // Grandes empresas B2B
+    {
+      id: 'bcn-b2b-1',
+      business: 'Amazon Web Services',
+      category: 'Cloud Computing B2B',
+      message: 'Esta música está patrocinada por AWS. La plataforma de cloud computing más completa del mundo. aws.amazon.com/es',
+      duration: 12,
+      city: 'Barcelona',
+      country: 'España'
+    },
+    {
+      id: 'bcn-b2b-2',
+      business: 'Google Cloud',
+      category: 'Cloud & IA B2B',
+      message: 'Quawe Barcelona es posible gracias a Google Cloud. Infraestructura e inteligencia artificial para empresas. cloud.google.com/es',
+      duration: 12,
+      city: 'Barcelona',
+      country: 'España'
+    },
+    {
+      id: 'bcn-b2b-3',
+      business: 'Oracle España',
+      category: 'Base de Datos B2B',
+      message: 'Esta música está patrocinada por Oracle. Líder mundial en bases de datos y soluciones empresariales. oracle.com/es',
       duration: 12,
       city: 'Barcelona',
       country: 'España'
@@ -129,6 +204,34 @@ export const localAdsDatabase: Record<string, LocalAd[]> = {
       duration: 12,
       city: 'CDMX',
       country: 'México'
+    },
+    // Grandes empresas B2B
+    {
+      id: 'cdmx-b2b-1',
+      business: 'Alibaba.com',
+      category: 'Marketplace B2B',
+      message: 'Esta música está patrocinada por Alibaba.com. La plataforma B2B más grande del mundo para comercio internacional. alibaba.com',
+      duration: 12,
+      city: 'CDMX',
+      country: 'México'
+    },
+    {
+      id: 'cdmx-b2b-2',
+      business: 'Shopify Plus',
+      category: 'E-commerce B2B',
+      message: 'Quawe CDMX es posible gracias a Shopify Plus. La plataforma de e-commerce para empresas en crecimiento. shopify.com/plus',
+      duration: 12,
+      city: 'CDMX',
+      country: 'México'
+    },
+    {
+      id: 'cdmx-b2b-3',
+      business: 'IBM México',
+      category: 'Tecnología B2B',
+      message: 'Esta música está patrocinada por IBM. Soluciones de inteligencia artificial y cloud para empresas. ibm.com/mx',
+      duration: 12,
+      city: 'CDMX',
+      country: 'México'
     }
   ],
   'Guadalajara': [
@@ -179,6 +282,25 @@ export const localAdsDatabase: Record<string, LocalAd[]> = {
       duration: 12,
       city: 'Buenos Aires',
       country: 'Argentina'
+    },
+    // Grandes empresas B2B
+    {
+      id: 'ba-b2b-1',
+      business: 'Stripe',
+      category: 'Pagos Digitales B2B',
+      message: 'Esta música está patrocinada por Stripe. La plataforma de pagos online para negocios de todos los tamaños. stripe.com/es',
+      duration: 12,
+      city: 'Buenos Aires',
+      country: 'Argentina'
+    },
+    {
+      id: 'ba-b2b-2',
+      business: 'PayPal Business',
+      category: 'Pagos B2B',
+      message: 'Quawe Buenos Aires es posible gracias a PayPal Business. Pagos seguros para empresas en todo el mundo. paypal.com/ar/business',
+      duration: 12,
+      city: 'Buenos Aires',
+      country: 'Argentina'
     }
   ],
   // COLOMBIA
@@ -197,6 +319,25 @@ export const localAdsDatabase: Record<string, LocalAd[]> = {
       business: 'Café Juan Valdez',
       category: 'Gastronomía',
       message: 'La música de Quawe Bogotá es posible gracias a Café Juan Valdez. El mejor café 100% colombiano. Visítanos en toda la ciudad',
+      duration: 12,
+      city: 'Bogotá',
+      country: 'Colombia'
+    },
+    // Grandes empresas B2B
+    {
+      id: 'bog-b2b-1',
+      business: 'FedEx Business',
+      category: 'Logística B2B',
+      message: 'Esta música está patrocinada por FedEx. Soluciones de logística y envío para empresas. fedex.com/es-co',
+      duration: 12,
+      city: 'Bogotá',
+      country: 'Colombia'
+    },
+    {
+      id: 'bog-b2b-2',
+      business: 'DHL Business',
+      category: 'Logística Internacional B2B',
+      message: 'Quawe Bogotá es posible gracias a DHL. Líder mundial en logística internacional para empresas. dhl.com/co-es',
       duration: 12,
       city: 'Bogotá',
       country: 'Colombia'
@@ -221,6 +362,16 @@ export const localAdsDatabase: Record<string, LocalAd[]> = {
       duration: 12,
       city: 'Santiago',
       country: 'Chile'
+    },
+    // Grandes empresas B2B
+    {
+      id: 'san-b2b-1',
+      business: 'Bosch Professional',
+      category: 'Herramientas Industriales B2B',
+      message: 'Esta música está patrocinada por Bosch Professional. Herramientas y tecnología para profesionales e industrias. bosch-professional.com/cl',
+      duration: 12,
+      city: 'Santiago',
+      country: 'Chile'
     }
   ],
   // PERÚ
@@ -239,6 +390,25 @@ export const localAdsDatabase: Record<string, LocalAd[]> = {
       business: 'Café Pasadísima',
       category: 'Gastronomía',
       message: 'La música de Quawe Lima es posible gracias a Café Pasadísima. El mejor café peruano en Miraflores. Visítanos hoy',
+      duration: 12,
+      city: 'Lima',
+      country: 'Perú'
+    },
+    // Grandes empresas B2B
+    {
+      id: 'lim-b2b-1',
+      business: 'Siemens Perú',
+      category: 'Tecnología Industrial B2B',
+      message: 'Esta música está patrocinada por Siemens. Tecnología industrial y soluciones digitales para empresas. siemens.com/pe',
+      duration: 12,
+      city: 'Lima',
+      country: 'Perú'
+    },
+    {
+      id: 'lim-b2b-2',
+      business: 'Schneider Electric',
+      category: 'Gestión Energética B2B',
+      message: 'Quawe Lima es posible gracias a Schneider Electric. Gestión de energía y automatización para industrias. se.com/pe',
       duration: 12,
       city: 'Lima',
       country: 'Perú'
@@ -306,12 +476,109 @@ export const localAdsDatabase: Record<string, LocalAd[]> = {
       city: 'Miami',
       country: 'USA'
     }
-  ]
+  ],
+
 };
+
+// Anuncios de empresas B2B globales (aparecen en todas las ciudades)
+export const globalB2BAds: LocalAd[] = [
+  {
+    id: 'global-b2b-1',
+    business: 'Adobe Creative Cloud',
+    category: 'Software Creativo B2B',
+    message: 'Esta música está patrocinada por Adobe Creative Cloud. Las herramientas creativas líderes para profesionales y empresas. adobe.com/creativecloud',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-2',
+    business: 'Zoom Business',
+    category: 'Comunicaciones B2B',
+    message: 'Quawe es posible gracias a Zoom Business. Videoconferencias y colaboración para empresas de todos los tamaños. zoom.es/business',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-3',
+    business: 'Slack',
+    category: 'Colaboración B2B',
+    message: 'Esta música está patrocinada por Slack. La plataforma de comunicación y colaboración para equipos. slack.com/intl/es-es',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-4',
+    business: 'Atlassian',
+    category: 'Gestión de Proyectos B2B',
+    message: 'Quawe es posible gracias a Atlassian. Jira, Confluence y Trello para gestionar proyectos empresariales. atlassian.com/es',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-5',
+    business: 'HubSpot',
+    category: 'Marketing & Ventas B2B',
+    message: 'Esta música está patrocinada por HubSpot. CRM y marketing automation para hacer crecer tu negocio. hubspot.com/products',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-6',
+    business: 'Dropbox Business',
+    category: 'Almacenamiento Cloud B2B',
+    message: 'Quawe es posible gracias a Dropbox Business. Almacenamiento en la nube y colaboración para equipos. dropbox.com/business',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-7',
+    business: 'Canva for Teams',
+    category: 'Diseño B2B',
+    message: 'Esta música está patrocinada por Canva for Teams. Diseño gráfico colaborativo para empresas. canva.com/es_es/teams',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-8',
+    business: 'Notion',
+    category: 'Productividad B2B',
+    message: 'Quawe es posible gracias a Notion. El espacio de trabajo todo-en-uno para equipos. notion.com/product',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-9',
+    business: 'Figma',
+    category: 'Diseño UI/UX B2B',
+    message: 'Esta música está patrocinada por Figma. La plataforma de diseño colaborativo para equipos de producto. figma.com',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  },
+  {
+    id: 'global-b2b-10',
+    business: 'GitHub',
+    category: 'Desarrollo B2B',
+    message: 'Quawe es posible gracias a GitHub. La plataforma de desarrollo de software más grande del mundo. github.com',
+    duration: 12,
+    city: 'Global',
+    country: 'Global'
+  }
+];
 
 // Función para obtener anuncios de una ciudad específica
 export function getAdsForCity(city: string): LocalAd[] {
-  return localAdsDatabase[city] || [];
+  const cityAds = localAdsDatabase[city] || [];
+  // Combinar anuncios locales con anuncios globales B2B
+  return [...cityAds, ...globalB2BAds];
 }
 
 // Función para obtener un anuncio aleatorio de una ciudad

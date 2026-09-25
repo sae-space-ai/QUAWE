@@ -40,6 +40,7 @@ import AuthModal from './components/AuthModal';
 import PremiumModal from './components/PremiumModal';
 import AdShowcase from './components/AdShowcase';
 import AuthorBooksShowcase from './components/AuthorBooksShowcase';
+import B2BCompaniesDirectory from './components/B2BCompaniesDirectory';
 import { earnPointsForListening } from './services/pointsSystem';
 import { startAdScheduler, stopAdScheduler, pauseAdScheduler, resumeAdScheduler } from './services/adScheduler';
 import { getCurrentUser, startListeningSession, stopListeningSession } from './services/authSystem';
@@ -138,6 +139,7 @@ export default function App() {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [showAdShowcase, setShowAdShowcase] = useState(false);
   const [showAuthorBooks, setShowAuthorBooks] = useState(false);
+  const [showB2BDirectory, setShowB2BDirectory] = useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(!!getCurrentUser());
   const [isPremium, setIsPremium] = useState(false);
 
@@ -808,6 +810,7 @@ export default function App() {
                       setShowPointsDashboard(false);
                       setShowProductCatalog(false);
                       setShowUserProfile(false);
+                      setShowB2BDirectory(false);
                     }}
                     className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                       showAuthorBooks
@@ -816,6 +819,24 @@ export default function App() {
                     }`}
                   >
                     📚 Libros
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowB2BDirectory(!showB2BDirectory);
+                      setShowLocalStations(false);
+                      setShowThematicChannels(false);
+                      setShowPointsDashboard(false);
+                      setShowProductCatalog(false);
+                      setShowUserProfile(false);
+                      setShowAuthorBooks(false);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                      showB2BDirectory
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/30'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                    }`}
+                  >
+                    🏢 Empresas B2B
                   </button>
                 </>
               ) : (
@@ -846,7 +867,10 @@ export default function App() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {showAuthorBooks ? (
+        {showB2BDirectory ? (
+          // Directorio de Empresas B2B
+          <B2BCompaniesDirectory />
+        ) : showAuthorBooks ? (
           // Catálogo de Libros del Autor
           <AuthorBooksShowcase />
         ) : showUserProfile ? (
