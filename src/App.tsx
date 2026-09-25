@@ -11,10 +11,6 @@ import { useRadioStore } from './store/radioStore';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useAudioPlayer } from './hooks/useAudioPlayer';
 import {
-  searchStationsByName,
-  getTopStations,
-  getStationsByTag,
-  getStationsByCountry,
   getGenreEmoji,
   getGenreColor,
   formatListeners,
@@ -129,11 +125,6 @@ export default function App() {
   const location = useGeolocation();
   const { audioRef, getAnalyserData } = useAudioPlayer();
 
-  // Cargar emisoras top al inicio
-  useEffect(() => {
-    loadTopStations();
-  }, []);
-
   // Crear estación especial PULSAR Original
   const pulsarOriginalStation: Station = {
     stationuuid: 'pulsar-original',
@@ -179,46 +170,72 @@ export default function App() {
     return () => clearInterval(timer);
   }, [sleepTimerActive, sleepTimerCountdown]);
 
-  // Helper para construir la lista completa de estaciones
-  const buildStationList = (externalStations: Station[]): Station[] => {
-    // PULSAR Original + 10 estaciones locales + emisoras externas
-    const localStations = localPulsarStations.map((ls) => ls.station);
-    return [pulsarOriginalStation, ...localStations, ...externalStations];
-  };
-
-  const loadTopStations = async () => {
+  // Cargar solo las emisoras PULSAR propias
+  const loadPulsarStations = () => {
     setLoading(true);
-    const topStations = await getTopStations(50);
-    setStations(buildStationList(topStations));
+    // Solo PULSAR Original + 10 estaciones locales
+    const localStations = localPulsarStations.map((ls) => ls.station);
+    setStations([pulsarOriginalStation, ...localStations]);
     setLoading(false);
   };
 
-  const handleSearch = async (query: string) => {
+  // Cargar emisoras al inicio
+  useEffect(() => {
+    loadPulsarStations();
+  }, []);
+
+  // Búsqueda simple en las emisoras PULSAR
+  const handleSearch = (query: string) => {
     if (!query.trim()) {
-      loadTopStations();
+      loadPulsarStations();
       return;
     }
+    
     setLoading(true);
-    const results = await searchStationsByName(query, 50);
-    setStations(buildStationList(results));
+    const localStations = localPulsarStations.map((ls) => ls.station);
+    const allStations = [pulsarOriginalStation, ...localStations];
+    
+    const filtered = allStations.filter((station) =>
+      station.name.toLowerCase().includes(query.toLowerCase()) ||
+      station.tags.toLowerCase().includes(query.toLowerCase()) ||
+      station.country.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    setStations(filtered);
     setLoading(false);
   };
 
-  const handleGenreSelect = async (genre: string) => {
+  // Filtro por género (solo en tags de PULSAR)
+  const handleGenreSelect = (genre: string) => {
     setSelectedGenre(genre);
     setSelectedCountry(null);
     setLoading(true);
-    const results = await getStationsByTag(genre, 50);
-    setStations(buildStationList(results));
+    
+    const localStations = localPulsarStations.map((ls) => ls.station);
+    const allStations = [pulsarOriginalStation, ...localStations];
+    
+    const filtered = allStations.filter((station) =>
+      station.tags.toLowerCase().includes(genre.toLowerCase())
+    );
+    
+    setStations(filtered);
     setLoading(false);
   };
 
-  const handleCountrySelect = async (countryCode: string) => {
+  // Filtro por país (solo en PULSAR)
+  const handleCountrySelect = (countryCode: string) => {
     setSelectedCountry(countryCode);
     setSelectedGenre(null);
     setLoading(true);
-    const results = await getStationsByCountry(countryCode, 50);
-    setStations(buildStationList(results));
+    
+    const localStations = localPulsarStations.map((ls) => ls.station);
+    const allStations = [pulsarOriginalStation, ...localStations];
+    
+    const filtered = allStations.filter((station) =>
+      station.countrycode === countryCode
+    );
+    
+    setStations(filtered);
     setLoading(false);
   };
 
@@ -550,13 +567,13 @@ export default function App() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-white">
                   {selectedGenre
-                    ? `Emisoras de ${genres.find((g) => g.id === selectedGenre)?.name}`
+                    ? `PULSAR ${genres.find((g) => g.id === selectedGenre)?.name}`
                     : selectedCountry
-                    ? `Emisoras de ${popularCountries.find((c) => c.code === selectedCountry)?.name}`
-                    : 'Top Emisoras'}
+                    ? `PULSAR ${popularCountries.find((c) => c.code === selectedCountry)?.name}`
+                    : 'Red PULSAR'}
                 </h2>
                 <button
-                  onClick={loadTopStations}
+                  onClick={loadPulsarStations}
                   className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
                 >
                   <RefreshCw className="w-4 h-4" />
