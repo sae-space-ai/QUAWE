@@ -1,4 +1,4 @@
-# 📚 APIs y Herramientas Utilizadas
+# 📚 PULSAR FM - APIs y Herramientas Utilizadas
 
 ## 🎵 APIs de Radio (GRATIS)
 
@@ -107,7 +107,7 @@ GET https://nominatim.openstreetmap.org/reverse
   &addressdetails=1
 
 Headers: {
-  'User-Agent': 'OndaGlobal/1.0 (https://ondaglobal.app)'
+  'User-Agent': 'PulsarFM/1.0 (https://pulsarfm.app)'
 }
 ```
 

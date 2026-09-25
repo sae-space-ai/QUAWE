@@ -20,7 +20,7 @@ function rotateApi(): void {
 
 // Headers requeridos por la API
 const headers = {
-  'User-Agent': 'OndaGlobal/1.0 (https://ondaglobal.app)',
+  'User-Agent': 'PulsarFM/1.0 (https://pulsarfm.app)',
 };
 
 /**

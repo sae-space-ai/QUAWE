@@ -1,6 +1,10 @@
-# 🎵 Onda Global - Cadena Radiofónica Geolocal
+# 🎵 PULSAR FM - Tu Frecuencia Universal
 
-Plataforma de radio en streaming con geolocalización, publicidad local segmentada y funcionalidades avanzadas.
+**PULSAR FM** es una cadena radiofónica global que transmite desde el corazón del cosmos. Como una estrella pulsar que emite pulsos rítmicos de energía, nuestra plataforma transmite música en streaming con geolocalización inteligente y publicidad local segmentada.
+
+## 🌟 ¿Por qué PULSAR FM?
+
+Un **pulsar** es una estrella de neutrones que gira rápidamente y emite haces de radiación electromagnética. Estos pulsos son tan precisos que se usan como relojes cósmicos. En PULSAR FM, cada emisora es un pulsar que emite su señal única a través del éter digital, conectando oyentes en todo el mundo.
 
 ## 🚀 Características Principales
 
@@ -109,6 +113,14 @@ npm run build
 # Preview del build
 npm run preview
 ```
+
+### 🎨 Identidad Visual
+
+- **Nombre**: PULSAR FM
+- **Tagline**: Tu Frecuencia Universal
+- **Colores**: Naranja eléctrico (#FF6B35), Rosa cósmico (#E91E8C), Púrpura profundo (#6B2FA0)
+- **Logo**: Estrella pulsar con ondas concéntricas expandiéndose
+- **Tipografía**: Bold, moderna, con gradientes
 
 ## 🎯 Estructura del Proyecto
 

@@ -1,4 +1,4 @@
-# 🎯 Funcionalidades y Habilidades Implementadas
+# 🎯 PULSAR FM - Funcionalidades y Habilidades Implementadas
 
 ## ✅ Funcionalidades Principales
 

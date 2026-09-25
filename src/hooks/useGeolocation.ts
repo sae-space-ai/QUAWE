@@ -29,7 +29,12 @@ export function useGeolocation() {
           // Reverse geocoding con Nominatim (OpenStreetMap)
           try {
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
+              {
+                headers: {
+                  'User-Agent': 'PulsarFM/1.0 (https://pulsarfm.app)',
+                },
+              }
             );
             const data = await response.json();
 

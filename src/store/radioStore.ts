@@ -92,7 +92,7 @@ export const useRadioStore = create<RadioState>()(
       setSleepTimer: (minutes) => set({ sleepTimerMinutes: minutes }),
     }),
     {
-      name: 'onda-global-storage',
+      name: 'pulsar-fm-storage',
       partialize: (state) => ({
         favorites: state.favorites,
         history: state.history,

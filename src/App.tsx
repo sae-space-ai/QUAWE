@@ -21,6 +21,7 @@ import {
 } from './services/radioApi';
 import { genres, localAds, chatMessages, scheduleItems, sleepTimerOptions, popularCountries } from './data/constants';
 import { Station } from './types';
+import PulsarLogo from './components/PulsarLogo';
 
 // ============================================
 // Visualizador de Audio
@@ -227,15 +228,7 @@ export default function App() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
-                <Radio className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
-                  Onda Global
-                </h1>
-                <p className="text-xs text-gray-400">Cadena Radiofónica Geolocal</p>
-              </div>
+              <PulsarLogo size={56} animated={true} showText={true} />
             </motion.div>
 
             <div className="flex items-center gap-3">
