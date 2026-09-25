@@ -1,5 +1,5 @@
-// Sistema de Productos de Marcas para Canje
-// Las marcas pagan con productos físicos en lugar de publicidad tradicional
+// Catálogo de Productos con Información Real de Marcas
+// Productos de marcas patrocinadoras con detalles completos
 
 export interface Product {
   id: string;
@@ -9,275 +9,357 @@ export interface Product {
   description: string;
   pointsCost: number;
   stock: number;
-  image: string;
+  image: string; // Emoji o URL de imagen
+  brandLogo: string; // Logo de la marca
   sponsorMessage: string;
-  city?: string; // Ciudad donde se patrocina (opcional)
-  channel?: string; // Canal temático donde se patrocina (opcional)
+  city?: string;
+  channel?: string;
+  retailPrice: string; // Precio real del producto
+  features: string[]; // Características del producto
+  colors?: string[]; // Colores disponibles
+  sizes?: string[]; // Tallas disponibles
 }
 
-export interface Brand {
-  id: string;
-  name: string;
-  logo: string;
-  description: string;
-  products: Product[];
-  totalProductsSponsored: number;
-}
-
-// Base de datos de productos de marcas
+// Base de datos de productos reales de marcas conocidas
 export const productsDatabase: Product[] = [
-  // ZAPATOS
+  // ==================== ZAPATOS ====================
   {
     id: 'prod-001',
     brand: 'Nike',
     name: 'Air Max 270',
     category: 'zapatos',
-    description: 'Zapatillas deportivas con tecnología Air Max para máximo confort',
+    description: 'Zapatillas deportivas con tecnología Air Max visible para máximo confort y estilo. Diseño moderno con amortiguación revolucionaria.',
     pointsCost: 5000,
     stock: 50,
     image: '👟',
-    sponsorMessage: 'Estas zapatillas son patrocinadas por Nike. Escucha Quawe Rock y gana puntos para canjearlas',
-    channel: 'rock'
+    brandLogo: '✓',
+    sponsorMessage: 'Estas zapatillas Nike Air Max 270 son patrocinadas por Nike. Escucha Quawe Rock y gana puntos para canjearlas',
+    channel: 'rock',
+    retailPrice: '€150',
+    features: ['Air Max visible', 'Malla transpirable', 'Suela de goma', 'Amortiguación máxima'],
+    colors: ['Negro/Blanco', 'Gris/Rojo', 'Azul/Blanco'],
+    sizes: ['38', '39', '40', '41', '42', '43', '44', '45']
   },
   {
     id: 'prod-002',
     brand: 'Adidas',
     name: 'Ultraboost 22',
     category: 'zapatos',
-    description: 'Zapatillas de running con tecnología Boost para máxima energía',
+    description: 'Zapatillas de running premium con tecnología Boost para máxima retorno de energía. Diseñadas para corredores exigentes.',
     pointsCost: 4500,
     stock: 40,
     image: '👟',
-    sponsorMessage: 'Estas zapatillas son patrocinadas por Adidas. Escucha Quawe Electrónica y gana puntos',
-    channel: 'electronica'
+    brandLogo: '✓',
+    sponsorMessage: 'Estas zapatillas Adidas Ultraboost 22 son patrocinadas por Adidas. Escucha Quawe Electrónica y gana puntos',
+    channel: 'electronica',
+    retailPrice: '€180',
+    features: ['Tecnología Boost', 'Primeknit+', 'Continental Rubber', 'Torsion System'],
+    colors: ['Negro Total', 'Blanco/Core Black', 'Gris'],
+    sizes: ['38', '39', '40', '41', '42', '43', '44']
   },
   {
     id: 'prod-003',
     brand: 'Puma',
     name: 'RS-X³',
     category: 'zapatos',
-    description: 'Zapatillas retro-futuristas con diseño único',
+    description: 'Zapatillas retro-futuristas con diseño chunky y tecnología Running System. Estilo urbano con comodidad excepcional.',
     pointsCost: 3500,
     stock: 60,
     image: '👟',
-    sponsorMessage: 'Estas zapatillas son patrocinadas por Puma. Escucha Quawe Hip Hop y gana puntos',
-    channel: 'hiphop'
+    brandLogo: '✓',
+    sponsorMessage: 'Estas zapatillas Puma RS-X³ son patrocinadas por Puma. Escucha Quawe Hip Hop y gana puntos',
+    channel: 'hiphop',
+    retailPrice: '€110',
+    features: ['Diseño chunky', 'RS Technology', 'Malla y sintéticos', 'Suela gruesa'],
+    colors: ['Blanco/Azul', 'Negro/Rojo', 'Multicolor'],
+    sizes: ['38', '39', '40', '41', '42', '43', '44']
   },
 
-  // JOYAS
+  // ==================== JOYAS ====================
   {
     id: 'prod-004',
     brand: 'Tous',
     name: 'Collar Osito',
     category: 'joyas',
-    description: 'Collar de plata con el icónico osito de Tous',
+    description: 'Collar de plata de primera ley con el icónico osito de Tous. Joya emblemática de la marca española, perfecta para regalo.',
     pointsCost: 8000,
     stock: 20,
     image: '💎',
-    sponsorMessage: 'Este collar es patrocinado por Tous. Escucha Quawe Pop y gana puntos para canjearlo',
-    channel: 'pop'
+    brandLogo: '✓',
+    sponsorMessage: 'Este collar Tous Osito es patrocinado por Tous. Escucha Quawe Pop y gana puntos para canjearlo',
+    channel: 'pop',
+    retailPrice: '€250',
+    features: ['Plata de primera ley', 'Diseño icónico', 'Cadena ajustable', 'Caja de regalo incluida'],
+    colors: ['Plata', 'Plata con oro']
   },
   {
     id: 'prod-005',
     brand: 'Swarovski',
     name: 'Pulsera Crystal',
     category: 'joyas',
-    description: 'Pulsera de cristal con acabados premium',
+    description: 'Pulsera de cristal con acabados premium y diseño elegante. Cristales Swarovski de alta calidad que brillan con luz propia.',
     pointsCost: 6000,
     stock: 30,
     image: '💎',
-    sponsorMessage: 'Esta pulsera es patrocinada por Swarovski. Escucha Quawe Clásica y gana puntos',
-    channel: 'clasica'
+    brandLogo: '✓',
+    sponsorMessage: 'Esta pulsera Swarovski Crystal es patrocinada por Swarovski. Escucha Quawe Clásica y gana puntos',
+    channel: 'clasica',
+    retailPrice: '€195',
+    features: ['Cristal Swarovski', 'Cierre magnético', 'Baño en rodio', 'Caja premium'],
+    colors: ['Cristal transparente', 'Azul', 'Rosa']
   },
   {
     id: 'prod-006',
     brand: 'Pandora',
     name: 'Brazalete Moments',
     category: 'joyas',
-    description: 'Brazalete personalizable con charms intercambiables',
+    description: 'Brazalete personalizable de plata con sistema de charms intercambiables. Crea tu estilo único con los charms que más te representen.',
     pointsCost: 7000,
     stock: 25,
     image: '💎',
-    sponsorMessage: 'Este brazalete es patrocinado por Pandora. Escucha Quawe Jazz y gana puntos',
-    channel: 'jazz'
+    brandLogo: '✓',
+    sponsorMessage: 'Este brazalete Pandora Moments es patrocinado por Pandora. Escucha Quawe Jazz y gana puntos',
+    channel: 'jazz',
+    retailPrice: '€220',
+    features: ['Plata de primera ley', 'Sistema de rosca', 'Cierre de barril', 'Personalizable'],
+    sizes: ['16cm', '17cm', '18cm', '19cm', '20cm']
   },
 
-  // BISUTERÍA
+  // ==================== BISUTERÍA ====================
   {
     id: 'prod-007',
     brand: 'Bimba y Lola',
     name: 'Pendientes Flower',
     category: 'bisuteria',
-    description: 'Pendientes de diseño floral en metal dorado',
+    description: 'Pendientes de diseño floral en metal dorado con acabados de alta calidad. Pieza versátil para cualquier ocasión.',
     pointsCost: 2500,
     stock: 100,
     image: '✨',
-    sponsorMessage: 'Estos pendientes son patrocinados por Bimba y Lola. Escucha Quawe Latina y gana puntos',
-    channel: 'latin'
+    brandLogo: '✓',
+    sponsorMessage: 'Estos pendientes Bimba y Lola Flower son patrocinados por Bimba y Lola. Escucha Quawe Latina y gana puntos',
+    channel: 'latin',
+    retailPrice: '€75',
+    features: ['Metal dorado', 'Diseño floral', 'Cierre de presión', 'Hipoalergénico'],
+    colors: ['Dorado', 'Plateado', 'Rose gold']
   },
   {
     id: 'prod-008',
     brand: 'Parfois',
     name: 'Collar Boho',
     category: 'bisuteria',
-    description: 'Collar estilo bohemio con detalles étnicos',
+    description: 'Collar estilo bohemio con detalles étnicos y cuentas de colores. Perfecto para looks veraniegos y festivales.',
     pointsCost: 2000,
     stock: 120,
     image: '✨',
-    sponsorMessage: 'Este collar es patrocinado por Parfois. Escucha Quawe Reggae y gana puntos',
-    channel: 'reggae'
+    brandLogo: '✓',
+    sponsorMessage: 'Este collar Parfois Boho es patrocinado por Parfois. Escucha Quawe Reggae y gana puntos',
+    channel: 'reggae',
+    retailPrice: '€55',
+    features: ['Estilo bohemio', 'Cuentas multicolor', 'Cierre ajustable', 'Diseño étnico'],
+    colors: ['Multicolor', 'Tonos tierra', 'Azul/Turquesa']
   },
   {
     id: 'prod-009',
     brand: 'Lovely',
     name: 'Set de Pulseras',
     category: 'bisuteria',
-    description: 'Set de 5 pulseras combinables en diferentes colores',
+    description: 'Set de 5 pulseras combinables en diferentes colores y texturas. Perfectas para layering y crear looks únicos.',
     pointsCost: 1500,
     stock: 150,
     image: '✨',
-    sponsorMessage: 'Este set es patrocinado por Lovely. Escucha Quawe Folk y gana puntos',
-    channel: 'folk'
+    brandLogo: '✓',
+    sponsorMessage: 'Este set de pulseras Lovely es patrocinado por Lovely. Escucha Quawe Folk y gana puntos',
+    channel: 'folk',
+    retailPrice: '€45',
+    features: ['Set de 5 piezas', 'Diseños variados', 'Elásticas', 'Combinables'],
+    colors: ['Dorado', 'Plateado', 'Multicolor', 'Rose gold', 'Negro']
   },
 
-  // ROPA
+  // ==================== ROPA ====================
   {
     id: 'prod-010',
     brand: 'Zara',
     name: 'Chaqueta Denim',
     category: 'ropa',
-    description: 'Chaqueta vaquera clásica con lavado moderno',
+    description: 'Chaqueta vaquera clásica con lavado moderno y corte actual. Pieza imprescindible en cualquier armario.',
     pointsCost: 4000,
     stock: 45,
     image: '👕',
-    sponsorMessage: 'Esta chaqueta es patrocinada por Zara. Escucha Quawe Rock y gana puntos',
-    channel: 'rock'
+    brandLogo: '✓',
+    sponsorMessage: 'Esta chaqueta Zara Denim es patrocinada por Zara. Escucha Quawe Rock y gana puntos',
+    channel: 'rock',
+    retailPrice: '€49.95',
+    features: ['Denim 100% algodón', 'Lavado moderno', 'Corte regular', 'Botones metálicos'],
+    colors: ['Azul claro', 'Azul medio', 'Azul oscuro'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL']
   },
   {
     id: 'prod-011',
     brand: 'H&M',
     name: 'Vestido Floral',
     category: 'ropa',
-    description: 'Vestido con estampado floral perfecto para primavera',
+    description: 'Vestido con estampado floral perfecto para primavera/verano. Tejido ligero y fluido con corte favorecedor.',
     pointsCost: 3000,
     stock: 55,
     image: '👗',
-    sponsorMessage: 'Este vestido es patrocinado por H&M. Escucha Quawe Pop y gana puntos',
-    channel: 'pop'
+    brandLogo: '✓',
+    sponsorMessage: 'Este vestido H&M Floral es patrocinado por H&M. Escucha Quawe Pop y gana puntos',
+    channel: 'pop',
+    retailPrice: '€29.99',
+    features: ['Estampado floral', 'Tejido ligero', 'Corte A-line', 'Largo midi'],
+    colors: ['Flores rosas', 'Flores azules', 'Flores multicolor'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL']
   },
   {
     id: 'prod-012',
     brand: 'Mango',
     name: 'Blazer Oversize',
     category: 'ropa',
-    description: 'Blazer de corte oversize tendencia actual',
+    description: 'Blazer de corte oversize tendencia actual. Elegante y versátil, perfecto para looks formales e informales.',
     pointsCost: 3500,
     stock: 40,
     image: '🧥',
-    sponsorMessage: 'Este blazer es patrocinado por Mango. Escucha Quawe Electrónica y gana puntos',
-    channel: 'electronica'
+    brandLogo: '✓',
+    sponsorMessage: 'Este blazer Mango Oversize es patrocinado por Mango. Escucha Quawe Electrónica y gana puntos',
+    channel: 'electronica',
+    retailPrice: '€59.99',
+    features: ['Corte oversize', 'Tejido estructurado', 'Doble botonadura', 'Forro interior'],
+    colors: ['Negro', 'Beige', 'Gris'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL']
   },
 
-  // ACCESORIOS
+  // ==================== ACCESORIOS ====================
   {
     id: 'prod-013',
     brand: 'Ray-Ban',
     name: 'Gafas Aviator',
     category: 'accesorios',
-    description: 'Gafas de sol icónicas con montura dorada',
+    description: 'Gafas de sol icónicas con montura dorada y cristales verdes. El modelo más emblemático de Ray-Ban desde 1937.',
     pointsCost: 5500,
     stock: 35,
     image: '🕶️',
-    sponsorMessage: 'Estas gafas son patrocinadas por Ray-Ban. Escucha Quawe Hip Hop y gana puntos',
-    channel: 'hiphop'
+    brandLogo: '✓',
+    sponsorMessage: 'Estas gafas Ray-Ban Aviator son patrocinadas por Ray-Ban. Escucha Quawe Hip Hop y gana puntos',
+    channel: 'hiphop',
+    retailPrice: '€154',
+    features: ['Montura metálica', 'Cristales de vidrio', 'Protección UV400', 'Estuche incluido'],
+    colors: ['Dorado/Verde', 'Plateado/Azul', 'Negro/Gris']
   },
   {
     id: 'prod-014',
     brand: 'Fossil',
     name: 'Reloj Minimal',
     category: 'accesorios',
-    description: 'Reloj de pulsera con diseño minimalista',
+    description: 'Reloj de pulsera con diseño minimalista y elegante. Movimiento de cuarzo japonés y correa de cuero genuino.',
     pointsCost: 4500,
     stock: 30,
     image: '⌚',
-    sponsorMessage: 'Este reloj es patrocinado por Fossil. Escucha Quawe Jazz y gana puntos',
-    channel: 'jazz'
+    brandLogo: '✓',
+    sponsorMessage: 'Este reloj Fossil Minimal es patrocinado por Fossil. Escucha Quawe Jazz y gana puntos',
+    channel: 'jazz',
+    retailPrice: '€129',
+    features: ['Movimiento de cuarzo', 'Correa de cuero', 'Resistente al agua 5ATM', 'Caja de acero'],
+    colors: ['Negro/Marrón', 'Plateado/Negro', 'Dorado/Marrón']
   },
   {
     id: 'prod-015',
     brand: 'Herschel',
     name: 'Mochila Classic',
     category: 'accesorios',
-    description: 'Mochila urbana con diseño clásico y funcional',
+    description: 'Mochila urbana con diseño clásico y funcional. Compartimento para laptop de 15" y múltiples bolsillos organizadores.',
     pointsCost: 3000,
     stock: 50,
     image: '🎒',
-    sponsorMessage: 'Esta mochila es patrocinada por Herschel. Escucha Quawe Flamenco y gana puntos',
-    channel: 'flamenco'
+    brandLogo: '✓',
+    sponsorMessage: 'Esta mochila Herschel Classic es patrocinada por Herschel. Escucha Quawe Flamenco y gana puntos',
+    channel: 'flamenco',
+    retailPrice: '€89.99',
+    features: ['Compartimento laptop 15"', 'Tejido poliéster', 'Forro interior estampado', 'Correas acolchadas'],
+    colors: ['Negro', 'Azul marino', 'Gris', 'Rojo']
   },
 
-  // TECNOLOGÍA
+  // ==================== TECNOLOGÍA ====================
   {
     id: 'prod-016',
     brand: 'Apple',
     name: 'AirPods Pro',
     category: 'tecnologia',
-    description: 'Auriculares inalámbricos con cancelación de ruido',
+    description: 'Auriculares inalámbricos premium con cancelación activa de ruido y audio espacial. La mejor experiencia de audio de Apple.',
     pointsCost: 15000,
     stock: 15,
     image: '🎧',
-    sponsorMessage: 'Estos auriculares son patrocinados por Apple. Escucha Quawe Rock y gana puntos',
-    channel: 'rock'
+    brandLogo: '✓',
+    sponsorMessage: 'Estos AirPods Pro son patrocinados por Apple. Escucha Quawe Rock y gana puntos',
+    channel: 'rock',
+    retailPrice: '€279',
+    features: ['Cancelación activa de ruido', 'Audio espacial', 'Resistencia al agua IPX4', 'Estuche de carga MagSafe'],
+    colors: ['Blanco']
   },
   {
     id: 'prod-017',
     brand: 'Sony',
     name: 'Walkman NW-A55',
     category: 'tecnologia',
-    description: 'Reproductor de música de alta resolución',
+    description: 'Reproductor de música de alta resolución con DAC premium. Para los auténticos audiófilos que buscan la máxima calidad de sonido.',
     pointsCost: 10000,
     stock: 20,
     image: '📱',
-    sponsorMessage: 'Este Walkman es patrocinado por Sony. Escucha Quawe Clásica y gana puntos',
-    channel: 'clasica'
+    brandLogo: '✓',
+    sponsorMessage: 'Este Walkman Sony NW-A55 es patrocinado por Sony. Escucha Quawe Clásica y gana puntos',
+    channel: 'clasica',
+    retailPrice: '€329',
+    features: ['Audio Hi-Res', 'Bluetooth LDAC', 'Batería 45 horas', 'Ampliación de rango digital'],
+    colors: ['Negro', 'Azul', 'Rojo']
   },
   {
     id: 'prod-018',
     brand: 'JBL',
     name: 'Altavoz Flip 6',
     category: 'tecnologia',
-    description: 'Altavoz portátil resistente al agua',
+    description: 'Altavoz portátil Bluetooth resistente al agua con sonido potente y graves profundos. Perfecto para llevar la música a cualquier lugar.',
     pointsCost: 6000,
     stock: 40,
     image: '🔊',
-    sponsorMessage: 'Esta altavoz es patrocinada por JBL. Escucha Quawe Electrónica y gana puntos',
-    channel: 'electronica'
+    brandLogo: '✓',
+    sponsorMessage: 'Esta altavoz JBL Flip 6 es patrocinada por JBL. Escucha Quawe Electrónica y gana puntos',
+    channel: 'electronica',
+    retailPrice: '€129',
+    features: ['Bluetooth 5.1', 'Resistente al agua IP67', 'Batería 12 horas', 'PartyBoost'],
+    colors: ['Negro', 'Azul', 'Rojo', 'Verde']
   },
 
-  // HOGAR
+  // ==================== HOGAR ====================
   {
     id: 'prod-019',
     brand: 'IKEA',
     name: 'Lámpara Dekad',
     category: 'hogar',
-    description: 'Lámpara de mesa con diseño moderno',
+    description: 'Lámpara de mesa con diseño moderno y minimalista. Iluminación LED de bajo consumo con interruptor táctil.',
     pointsCost: 2000,
     stock: 80,
     image: '💡',
-    sponsorMessage: 'Esta lámpara es patrocinada por IKEA. Escucha Quawe Folk y gana puntos',
-    channel: 'folk'
+    brandLogo: '✓',
+    sponsorMessage: 'Esta lámpara IKEA Dekad es patrocinada por IKEA. Escucha Quawe Folk y gana puntos',
+    channel: 'folk',
+    retailPrice: '€39.99',
+    features: ['LED integrado', 'Interruptor táctil', 'Bajo consumo', 'Diseño minimalista'],
+    colors: ['Blanco', 'Negro']
   },
   {
     id: 'prod-020',
     brand: 'Zara Home',
     name: 'Set de Cojines',
     category: 'hogar',
-    description: 'Set de 3 cojines decorativos con diseños étnicos',
+    description: 'Set de 3 cojines decorativos con diseños étnicos y texturas naturales. Perfectos para renovar tu salón con estilo bohemio.',
     pointsCost: 2500,
     stock: 60,
     image: '🛋️',
-    sponsorMessage: 'Este set es patrocinado por Zara Home. Escucha Quawe Reggae y gana puntos',
-    channel: 'reggae'
+    brandLogo: '✓',
+    sponsorMessage: 'Este set de cojines Zara Home es patrocinado por Zara Home. Escucha Quawe Reggae y gana puntos',
+    channel: 'reggae',
+    retailPrice: '€49.99',
+    features: ['Set de 3 piezas', 'Fundas extraíbles', 'Relleno incluido', 'Diseños étnicos'],
+    colors: ['Tonos tierra', 'Azules', 'Multicolor']
   }
 ];
 
@@ -339,4 +421,28 @@ export const pointsRanges = [
   { id: 'medium', name: '2,500 - 5,000 puntos', min: 2500, max: 5000 },
   { id: 'high', name: '5,000 - 10,000 puntos', min: 5000, max: 10000 },
   { id: 'premium', name: '10,000+ puntos', min: 10000, max: Infinity }
+];
+
+// Marcas patrocinadoras
+export const sponsorBrands = [
+  { name: 'Nike', logo: '✓', category: 'zapatos' },
+  { name: 'Adidas', logo: '✓', category: 'zapatos' },
+  { name: 'Puma', logo: '✓', category: 'zapatos' },
+  { name: 'Tous', logo: '✓', category: 'joyas' },
+  { name: 'Swarovski', logo: '✓', category: 'joyas' },
+  { name: 'Pandora', logo: '✓', category: 'joyas' },
+  { name: 'Bimba y Lola', logo: '✓', category: 'bisuteria' },
+  { name: 'Parfois', logo: '✓', category: 'bisuteria' },
+  { name: 'Lovely', logo: '✓', category: 'bisuteria' },
+  { name: 'Zara', logo: '✓', category: 'ropa' },
+  { name: 'H&M', logo: '✓', category: 'ropa' },
+  { name: 'Mango', logo: '✓', category: 'ropa' },
+  { name: 'Ray-Ban', logo: '✓', category: 'accesorios' },
+  { name: 'Fossil', logo: '✓', category: 'accesorios' },
+  { name: 'Herschel', logo: '✓', category: 'accesorios' },
+  { name: 'Apple', logo: '✓', category: 'tecnologia' },
+  { name: 'Sony', logo: '✓', category: 'tecnologia' },
+  { name: 'JBL', logo: '✓', category: 'tecnologia' },
+  { name: 'IKEA', logo: '✓', category: 'hogar' },
+  { name: 'Zara Home', logo: '✓', category: 'hogar' }
 ];
