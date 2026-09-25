@@ -131,6 +131,33 @@ export default function App() {
     loadTopStations();
   }, []);
 
+  // Crear estación especial PULSAR Original
+  const pulsarOriginalStation: Station = {
+    stationuuid: 'pulsar-original',
+    name: 'PULSAR Original',
+    url: '',
+    url_resolved: '',
+    homepage: 'https://audius.co/profmanuelgago',
+    favicon: '',
+    tags: 'original,audius,profmanuelgago',
+    country: 'Global',
+    countrycode: '',
+    state: '',
+    language: '',
+    languagecodes: '',
+    votes: 9999,
+    lastchangetime: '',
+    codec: '',
+    bitrate: 320,
+    hls: 0,
+    lastcheckok: 1,
+    lastchecktime: '',
+    clicktimestamp: '',
+    clickcount: 99999,
+    clicktrend: 100,
+    ssl_error: 0,
+  };
+
   // Sleep timer
   useEffect(() => {
     if (!sleepTimerActive || sleepTimerCountdown === null) return;
@@ -152,7 +179,8 @@ export default function App() {
   const loadTopStations = async () => {
     setLoading(true);
     const topStations = await getTopStations(50);
-    setStations(topStations);
+    // Insertar PULSAR Original como primera emisora
+    setStations([pulsarOriginalStation, ...topStations]);
     setLoading(false);
   };
 
@@ -163,7 +191,8 @@ export default function App() {
     }
     setLoading(true);
     const results = await searchStationsByName(query, 50);
-    setStations(results);
+    // Insertar PULSAR Original como primera emisora
+    setStations([pulsarOriginalStation, ...results]);
     setLoading(false);
   };
 
@@ -172,7 +201,8 @@ export default function App() {
     setSelectedCountry(null);
     setLoading(true);
     const results = await getStationsByTag(genre, 50);
-    setStations(results);
+    // Insertar PULSAR Original como primera emisora
+    setStations([pulsarOriginalStation, ...results]);
     setLoading(false);
   };
 
@@ -181,11 +211,23 @@ export default function App() {
     setSelectedGenre(null);
     setLoading(true);
     const results = await getStationsByCountry(countryCode, 50);
-    setStations(results);
+    // Insertar PULSAR Original como primera emisora
+    setStations([pulsarOriginalStation, ...results]);
     setLoading(false);
   };
 
   const handleStationClick = (station: Station) => {
+    // Si es PULSAR Original, mostrar el componente especial
+    if (station.stationuuid === 'pulsar-original') {
+      setShowOriginal(true);
+      return;
+    }
+    
+    // Si ya estamos en PULSAR Original y se hace clic en otra estación, salir
+    if (showOriginal) {
+      setShowOriginal(false);
+    }
+    
     if (currentStation?.stationuuid === station.stationuuid) {
       setIsPlaying(!isPlaying);
     } else {
@@ -479,53 +521,80 @@ export default function App() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {stations.map((station) => (
-                    <motion.button
-                      key={station.stationuuid}
-                      onClick={() => handleStationClick(station)}
-                      className={`w-full text-left p-4 rounded-xl transition-all ${
-                        currentStation?.stationuuid === station.stationuuid
-                          ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30'
-                          : 'bg-white/5 hover:bg-white/10 border border-white/5'
-                      }`}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0"
-                          style={{ backgroundColor: `${getGenreColor(station.tags)}20` }}
-                        >
-                          {getGenreEmoji(station.tags)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-white truncate">{station.name}</h3>
-                          <p className="text-xs text-gray-400 truncate">
-                            {station.country} • {station.tags.split(',')[0]}
-                          </p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-[10px] text-gray-500">
-                              {formatListeners(station.clickcount)} oyentes
-                            </span>
-                            <span className="text-[10px] text-gray-500">
-                              {station.bitrate} kbps
-                            </span>
+                  {stations.map((station) => {
+                    const isPulsarOriginal = station.stationuuid === 'pulsar-original';
+                    
+                    return (
+                      <motion.button
+                        key={station.stationuuid}
+                        onClick={() => handleStationClick(station)}
+                        className={`w-full text-left p-4 rounded-xl transition-all ${
+                          isPulsarOriginal
+                            ? 'bg-gradient-to-r from-orange-500/30 via-pink-500/30 to-purple-500/30 border-2 border-orange-400/50 shadow-lg shadow-orange-500/20'
+                            : currentStation?.stationuuid === station.stationuuid
+                            ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30'
+                            : 'bg-white/5 hover:bg-white/10 border border-white/5'
+                        }`}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                      >
+                        <div className="flex items-center gap-3">
+                          {isPulsarOriginal ? (
+                            // Logo especial para PULSAR Original
+                            <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-orange-500 to-pink-600 shadow-lg">
+                              <PulsarLogo size={40} animated={false} />
+                            </div>
+                          ) : (
+                            <div
+                              className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0"
+                              style={{ backgroundColor: `${getGenreColor(station.tags)}20` }}
+                            >
+                              {getGenreEmoji(station.tags)}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className={`text-sm font-semibold truncate ${
+                                isPulsarOriginal ? 'text-orange-300' : 'text-white'
+                              }`}>
+                                {station.name}
+                              </h3>
+                              {isPulsarOriginal && (
+                                <span className="px-2 py-0.5 rounded-full bg-orange-500/30 border border-orange-400/50 text-[9px] font-bold text-orange-300 uppercase tracking-wider flex-shrink-0">
+                                  ★ Oficial
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-400 truncate">
+                              {isPulsarOriginal 
+                                ? 'Prof. Manuel Gago • Audius' 
+                                : `${station.country} • ${station.tags.split(',')[0]}`
+                              }
+                            </p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-[10px] text-gray-500">
+                                {formatListeners(station.clickcount)} oyentes
+                              </span>
+                              <span className="text-[10px] text-gray-500">
+                                {station.bitrate} kbps
+                              </span>
+                            </div>
                           </div>
+                          {currentStation?.stationuuid === station.stationuuid && isPlaying && (
+                            <motion.div
+                              className="flex items-center gap-0.5"
+                              animate={{ opacity: [1, 0.5, 1] }}
+                              transition={{ duration: 1, repeat: Infinity }}
+                            >
+                              <div className="w-1 h-4 bg-orange-400 rounded-full" />
+                              <div className="w-1 h-3 bg-orange-400 rounded-full" />
+                              <div className="w-1 h-5 bg-orange-400 rounded-full" />
+                            </motion.div>
+                          )}
                         </div>
-                        {currentStation?.stationuuid === station.stationuuid && isPlaying && (
-                          <motion.div
-                            className="flex items-center gap-0.5"
-                            animate={{ opacity: [1, 0.5, 1] }}
-                            transition={{ duration: 1, repeat: Infinity }}
-                          >
-                            <div className="w-1 h-4 bg-orange-400 rounded-full" />
-                            <div className="w-1 h-3 bg-orange-400 rounded-full" />
-                            <div className="w-1 h-5 bg-orange-400 rounded-full" />
-                          </motion.div>
-                        )}
-                      </div>
-                    </motion.button>
-                  ))}
+                      </motion.button>
+                    );
+                  })}
                 </div>
               )}
             </div>
