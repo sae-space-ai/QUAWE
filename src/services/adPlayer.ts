@@ -2,6 +2,10 @@
 // Genera anuncios de voz de 12 segundos para cada emisora
 
 import { LocalAd } from '../data/localAds';
+import { ThematicAd } from '../data/thematicAds';
+
+// Tipo genérico para anuncios
+type Ad = LocalAd | ThematicAd;
 
 class AdPlayer {
   private audioContext: AudioContext | null = null;
@@ -23,7 +27,7 @@ class AdPlayer {
   }
 
   // Reproducir anuncio de 12 segundos
-  async playAd(ad: LocalAd, onComplete: () => void): Promise<void> {
+  async playAd(ad: Ad, onComplete: () => void): Promise<void> {
     if (this.isPlaying) {
       this.stop();
     }
@@ -119,7 +123,7 @@ class AdPlayer {
 export const adPlayer = new AdPlayer();
 
 // Función helper para reproducir anuncio
-export async function playLocalAd(ad: LocalAd, onComplete: () => void): Promise<void> {
+export async function playLocalAd(ad: Ad, onComplete: () => void): Promise<void> {
   return adPlayer.playAd(ad, onComplete);
 }
 

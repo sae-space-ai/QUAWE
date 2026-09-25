@@ -27,6 +27,9 @@ import { getAllThematicStations, ThematicStation } from './data/thematicStations
 import { getUserTracks, getTrackStreamUrl, getUserAlbums, getUserPlaylists, getAlbumTracks, getPlaylistTracks } from './services/audiusApi';
 import { getNextTrack, addToHistory, getQueueStats } from './services/queueManager';
 import { getRandomAdForCity, hasAdsForCity, LocalAd } from './data/localAds';
+import { getRandomAdForChannel, hasAdsForChannel, ThematicAd } from './data/thematicAds';
+import { getChannelContent, ChannelContent } from './data/channelContent';
+import ChannelContentDisplay from './components/ChannelContentDisplay';
 import { playLocalAd, stopLocalAd, isAdPlaying } from './services/adPlayer';
 import { Megaphone } from 'lucide-react';
 
@@ -112,7 +115,8 @@ export default function App() {
   const [showLocalStations, setShowLocalStations] = useState(false);
   const [showThematicChannels, setShowThematicChannels] = useState(false);
   const [selectedThematicChannel, setSelectedThematicChannel] = useState<ThematicChannel | null>(null);
-  const [currentAd, setCurrentAd] = useState<LocalAd | null>(null);
+  const [selectedChannelContent, setSelectedChannelContent] = useState<ChannelContent | null>(null);
+  const [currentAd, setCurrentAd] = useState<LocalAd | ThematicAd | null>(null);
   const [isAdPlayingState, setIsAdPlayingState] = useState(false);
   const [adCountdown, setAdCountdown] = useState(0);
 
@@ -190,6 +194,54 @@ export default function App() {
     }
 
     const ad = getRandomAdForCity(city);
+    if (!ad) return false;
+
+    setCurrentAd(ad);
+    setIsAdPlayingState(true);
+    setAdCountdown(12);
+
+    // Pausar música temporalmente
+    const wasPlaying = isPlaying;
+    if (wasPlaying) {
+      setIsPlaying(false);
+    }
+
+    // Iniciar countdown
+    const countdownInterval = setInterval(() => {
+      setAdCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Reproducir anuncio
+    await playLocalAd(ad, () => {
+      // Al finalizar el anuncio
+      clearInterval(countdownInterval);
+      setCurrentAd(null);
+      setIsAdPlayingState(false);
+      setAdCountdown(0);
+      
+      // Reanudar música si estaba sonando
+      if (wasPlaying) {
+        setIsPlaying(true);
+      }
+    });
+
+    return true;
+  };
+
+  // Función para reproducir anuncio temático de 12 segundos
+  const playThematicAd = async (channelId: string) => {
+    if (!hasAdsForChannel(channelId)) {
+      console.log(`[Ad] No hay anuncios para el canal ${channelId}`);
+      return false;
+    }
+
+    const ad = getRandomAdForChannel(channelId);
     if (!ad) return false;
 
     setCurrentAd(ad);
@@ -464,6 +516,8 @@ export default function App() {
 
   const handleThematicChannelSelect = (channel: ThematicChannel) => {
     setSelectedThematicChannel(channel);
+    const content = getChannelContent(channel.id);
+    setSelectedChannelContent(content);
   };
 
   const handleThematicStationClick = async (thematicStation: ThematicStation) => {
@@ -475,6 +529,11 @@ export default function App() {
     if (!channel) {
       console.error('Canal temático no encontrado');
       return;
+    }
+    
+    // Reproducir anuncio temático si existe para este canal
+    if (hasAdsForChannel(channel.id)) {
+      await playThematicAd(channel.id);
     }
     
     // Obtener URL de streaming de Audius filtrada por canal con stationId para evitar repeticiones
@@ -585,11 +644,16 @@ export default function App() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {showThematicChannels ? (
           // Canales Temáticos
-          <ThematicChannels
-            onChannelSelect={handleThematicChannelSelect}
-            onStationSelect={handleThematicStationClick}
-            selectedChannel={selectedThematicChannel}
-          />
+          <div className="space-y-6">
+            <ThematicChannels
+              onChannelSelect={handleThematicChannelSelect}
+              onStationSelect={handleThematicStationClick}
+              selectedChannel={selectedThematicChannel}
+            />
+            {selectedChannelContent && (
+              <ChannelContentDisplay content={selectedChannelContent} />
+            )}
+          </div>
         ) : showLocalStations ? (
           // Red Quawe Local - 100 ciudades geolocalizadas
           <LocalStationsGrid
