@@ -23,6 +23,8 @@ import { genres, localAds, chatMessages, scheduleItems, sleepTimerOptions, popul
 import { Station } from './types';
 import PulsarLogo from './components/PulsarLogo';
 import PulsarOriginal from './components/PulsarOriginal';
+import LocalStationsGrid from './components/LocalStationsGrid';
+import { localPulsarStations, getLocalStation, LocalPulsarStation } from './data/localStations';
 
 // ============================================
 // Visualizador de Audio
@@ -104,6 +106,7 @@ export default function App() {
   const [sleepTimerActive, setSleepTimerActive] = useState(false);
   const [sleepTimerCountdown, setSleepTimerCountdown] = useState<number | null>(null);
   const [showOriginal, setShowOriginal] = useState(false);
+  const [showLocalStations, setShowLocalStations] = useState(false);
 
   const {
     currentStation,
@@ -176,11 +179,17 @@ export default function App() {
     return () => clearInterval(timer);
   }, [sleepTimerActive, sleepTimerCountdown]);
 
+  // Helper para construir la lista completa de estaciones
+  const buildStationList = (externalStations: Station[]): Station[] => {
+    // PULSAR Original + 10 estaciones locales + emisoras externas
+    const localStations = localPulsarStations.map((ls) => ls.station);
+    return [pulsarOriginalStation, ...localStations, ...externalStations];
+  };
+
   const loadTopStations = async () => {
     setLoading(true);
     const topStations = await getTopStations(50);
-    // Insertar PULSAR Original como primera emisora
-    setStations([pulsarOriginalStation, ...topStations]);
+    setStations(buildStationList(topStations));
     setLoading(false);
   };
 
@@ -191,8 +200,7 @@ export default function App() {
     }
     setLoading(true);
     const results = await searchStationsByName(query, 50);
-    // Insertar PULSAR Original como primera emisora
-    setStations([pulsarOriginalStation, ...results]);
+    setStations(buildStationList(results));
     setLoading(false);
   };
 
@@ -201,8 +209,7 @@ export default function App() {
     setSelectedCountry(null);
     setLoading(true);
     const results = await getStationsByTag(genre, 50);
-    // Insertar PULSAR Original como primera emisora
-    setStations([pulsarOriginalStation, ...results]);
+    setStations(buildStationList(results));
     setLoading(false);
   };
 
@@ -211,8 +218,7 @@ export default function App() {
     setSelectedGenre(null);
     setLoading(true);
     const results = await getStationsByCountry(countryCode, 50);
-    // Insertar PULSAR Original como primera emisora
-    setStations([pulsarOriginalStation, ...results]);
+    setStations(buildStationList(results));
     setLoading(false);
   };
 
@@ -220,12 +226,23 @@ export default function App() {
     // Si es PULSAR Original, mostrar el componente especial
     if (station.stationuuid === 'pulsar-original') {
       setShowOriginal(true);
+      setShowLocalStations(false);
+      return;
+    }
+    
+    // Si es una estación local PULSAR, mostrar el componente Original
+    if (station.stationuuid.startsWith('pulsar-') && station.stationuuid !== 'pulsar-original') {
+      setShowOriginal(true);
+      setShowLocalStations(false);
       return;
     }
     
     // Si ya estamos en PULSAR Original y se hace clic en otra estación, salir
     if (showOriginal) {
       setShowOriginal(false);
+    }
+    if (showLocalStations) {
+      setShowLocalStations(false);
     }
     
     if (currentStation?.stationuuid === station.stationuuid) {
@@ -234,6 +251,12 @@ export default function App() {
       setCurrentStation(station);
       setIsPlaying(true);
     }
+  };
+
+  const handleLocalStationClick = (localStation: LocalPulsarStation) => {
+    // Al hacer clic en una estación local, mostrar PULSAR Original
+    setShowOriginal(true);
+    setShowLocalStations(false);
   };
 
   const handleSendChatMessage = () => {
@@ -276,7 +299,10 @@ export default function App() {
               
               {/* Toggle PULSAR Original */}
               <button
-                onClick={() => setShowOriginal(!showOriginal)}
+                onClick={() => {
+                  setShowOriginal(!showOriginal);
+                  setShowLocalStations(false);
+                }}
                 className={`ml-4 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showOriginal
                     ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow-lg shadow-orange-500/30'
@@ -284,6 +310,21 @@ export default function App() {
                 }`}
               >
                 {showOriginal ? '🎵 Original' : '📻 Radio'}
+              </button>
+
+              {/* Toggle Red Local */}
+              <button
+                onClick={() => {
+                  setShowLocalStations(!showLocalStations);
+                  setShowOriginal(false);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  showLocalStations
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                }`}
+              >
+                🌍 Red Local
               </button>
             </motion.div>
 
@@ -308,6 +349,13 @@ export default function App() {
         {showOriginal ? (
           // PULSAR Original - Canal del Artista
           <PulsarOriginal />
+        ) : showLocalStations ? (
+          // Red PULSAR Local - 10 ciudades geolocalizadas
+          <LocalStationsGrid
+            stations={localPulsarStations}
+            onStationClick={handleLocalStationClick}
+            userCity={location.city}
+          />
         ) : (
           // Radio Normal - Emisoras
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -523,6 +571,7 @@ export default function App() {
                 <div className="space-y-2">
                   {stations.map((station) => {
                     const isPulsarOriginal = station.stationuuid === 'pulsar-original';
+                    const isLocalPulsar = station.stationuuid.startsWith('pulsar-') && station.stationuuid !== 'pulsar-original';
                     
                     return (
                       <motion.button
@@ -531,6 +580,8 @@ export default function App() {
                         className={`w-full text-left p-4 rounded-xl transition-all ${
                           isPulsarOriginal
                             ? 'bg-gradient-to-r from-orange-500/30 via-pink-500/30 to-purple-500/30 border-2 border-orange-400/50 shadow-lg shadow-orange-500/20'
+                            : isLocalPulsar
+                            ? 'bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 border border-blue-400/30'
                             : currentStation?.stationuuid === station.stationuuid
                             ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30'
                             : 'bg-white/5 hover:bg-white/10 border border-white/5'
@@ -544,6 +595,11 @@ export default function App() {
                             <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-orange-500 to-pink-600 shadow-lg">
                               <PulsarLogo size={40} animated={false} />
                             </div>
+                          ) : isLocalPulsar ? (
+                            // Logo especial para estaciones locales PULSAR
+                            <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+                              <PulsarLogo size={40} animated={false} />
+                            </div>
                           ) : (
                             <div
                               className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0"
@@ -555,7 +611,7 @@ export default function App() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <h3 className={`text-sm font-semibold truncate ${
-                                isPulsarOriginal ? 'text-orange-300' : 'text-white'
+                                isPulsarOriginal ? 'text-orange-300' : isLocalPulsar ? 'text-blue-300' : 'text-white'
                               }`}>
                                 {station.name}
                               </h3>
@@ -564,10 +620,17 @@ export default function App() {
                                   ★ Oficial
                                 </span>
                               )}
+                              {isLocalPulsar && (
+                                <span className="px-2 py-0.5 rounded-full bg-blue-500/30 border border-blue-400/50 text-[9px] font-bold text-blue-300 uppercase tracking-wider flex-shrink-0">
+                                  🌍 Local
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-gray-400 truncate">
                               {isPulsarOriginal 
                                 ? 'Prof. Manuel Gago • Audius' 
+                                : isLocalPulsar
+                                ? `${station.state} • Tu música`
                                 : `${station.country} • ${station.tags.split(',')[0]}`
                               }
                             </p>

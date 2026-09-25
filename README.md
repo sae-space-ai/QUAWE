@@ -139,6 +139,38 @@ npm run preview
 
 Ver más detalles en [AUDIUS_INTEGRATION.md](./AUDIUS_INTEGRATION.md)
 
+### 🌍 Red PULSAR Local - 10 Ciudades Geolocalizadas
+
+**PULSAR FM** opera una red de 10 emisoras virtuales geolocalizadas en las principales ciudades hispanohablantes del mundo. Cada emisora reproduce exclusivamente la música de Prof. Manuel Gago.
+
+**Cobertura**:
+- 🇪🇸 **España**: Madrid, Barcelona
+- 🇲🇽 **México**: Ciudad de México
+- 🇦🇷 **Argentina**: Buenos Aires
+- 🇨🇴 **Colombia**: Bogotá
+- 🇵🇪 **Perú**: Lima
+- 🇨🇱 **Chile**: Santiago
+- 🇺🇸 **USA**: Miami
+- 🇩🇴 **Rep. Dominicana**: Santo Domingo
+- 🇻🇪 **Venezuela**: Caracas
+
+**Estadísticas de la Red**:
+- 10 ciudades
+- 8 países
+- 47.7 millones de habitantes alcanzados
+- 603,000 oyentes totales
+- Todas reproducen tu música de Audius
+
+**Características**:
+- ✅ Detección automática de la emisora local del usuario
+- ✅ Vista especial "Red Local" con grid de ciudades
+- ✅ Badge "🌍 Local" en cada emisora geolocalizada
+- ✅ Badge "📍 Tu ciudad" en la emisora del usuario
+- ✅ Estadísticas por ciudad (población, oyentes, frecuencia)
+- ✅ Diseño visual diferenciado (gradiente azul-púrpura)
+
+Ver más detalles en [RED_LOCAL.md](./RED_LOCAL.md)
+
 ## 🎯 Estructura del Proyecto
 
 ```
