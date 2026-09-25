@@ -1,63 +1,65 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Clock, Award, ShoppingBag, LogOut, CheckCircle, TrendingUp } from 'lucide-react';
-import { getCurrentUser, logoutUser, getUserStats, startListeningSession, stopListeningSession, formatListeningTime, getLevelName } from '../services/authSystem';
-import { User as UserType } from '../services/authSystem';
+import { User, Mail, Phone, MapPin, Calendar, Award, LogOut, Link2, Unlink, CheckCircle } from 'lucide-react';
+import { getCurrentUser, logoutUser, getUserStats, formatListeningTime, getLevelName } from '../services/authSystem';
+import { getLinkedOAuthProviders, unlinkOAuthAccount, oauthProviders } from '../services/oauthSystem';
 
 interface UserProfileProps {
-  onLogout: () => void;
+  onClose: () => void;
 }
 
-export default function UserProfile({ onLogout }: UserProfileProps) {
-  const [user, setUser] = useState<UserType | null>(null);
+export default function UserProfile({ onClose }: UserProfileProps) {
+  const [user, setUser] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
-  const [currentSessionTime, setCurrentSessionTime] = useState(0);
+  const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
+  const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
     loadUserData();
     
-    // Actualizar datos cada 5 segundos
-    const interval = setInterval(loadUserData, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (!user || !user.currentSessionStart) return;
-
-    // Actualizar tiempo de sesión actual cada segundo
-    const sessionInterval = setInterval(() => {
-      if (user.currentSessionStart) {
+    // Actualizar tiempo de sesión cada segundo
+    const timer = setInterval(() => {
+      if (user?.currentSessionStart) {
         const elapsed = Math.floor((Date.now() - user.currentSessionStart) / 1000);
-        setCurrentSessionTime(elapsed);
+        setCurrentTime(elapsed);
       }
     }, 1000);
 
-    return () => clearInterval(sessionInterval);
-  }, [user]);
+    return () => clearInterval(timer);
+  }, []);
 
   const loadUserData = () => {
     const currentUser = getCurrentUser();
-    setUser(currentUser);
     if (currentUser) {
+      setUser(currentUser);
       setStats(getUserStats(currentUser.id));
+      setLinkedProviders(getLinkedOAuthProviders());
     }
   };
 
   const handleLogout = () => {
-    if (user) {
-      stopListeningSession(user.id);
-    }
     logoutUser();
-    onLogout();
+    onClose();
+  };
+
+  const handleUnlinkProvider = (providerId: string) => {
+    if (confirm(`¿Estás seguro de que quieres desvincular tu cuenta de ${providerId}?`)) {
+      unlinkOAuthAccount(providerId);
+      loadUserData();
+    }
   };
 
   if (!user || !stats) {
-    return <div className="text-white">Cargando perfil...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-400">Cargando perfil...</div>
+      </div>
+    );
   }
 
-  const progressToNextLevel = user.level < 5 
-    ? ((user.points - (user.level - 1) * 5000) / 5000) * 100
-    : 100;
+  const levelInfo = getLevelName(user.points);
+  const nextLevel = user.level < 5 ? getLevelName(user.points + 1000) : null;
+  const progressToNextLevel = user.level < 5 ? ((user.points % 5000) / 5000) * 100 : 100;
 
   return (
     <motion.div
@@ -69,9 +71,17 @@ export default function UserProfile({ onLogout }: UserProfileProps) {
       <div className="rounded-2xl bg-gradient-to-br from-orange-500/20 via-pink-500/20 to-purple-500/20 backdrop-blur-xl border border-white/10 p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
-            </div>
+            {user.oauthAvatar ? (
+              <img 
+                src={user.oauthAvatar} 
+                alt={user.fullName}
+                className="w-16 h-16 rounded-full border-2 border-white/20"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center">
+                <User className="w-8 h-8 text-white" />
+              </div>
+            )}
             <div>
               <h2 className="text-2xl font-bold text-white">{user.fullName}</h2>
               <p className="text-sm text-gray-400">@{user.username}</p>
@@ -99,13 +109,27 @@ export default function UserProfile({ onLogout }: UserProfileProps) {
               <span className="text-xs text-yellow-400">Cuenta no verificada</span>
             </div>
           )}
+          {user.oauthProvider && (
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30">
+              <span className="text-xs text-blue-400">
+                {oauthProviders.find(p => p.id === user.oauthProvider)?.icon}{' '}
+                Conectado con {oauthProviders.find(p => p.id === user.oauthProvider)?.name}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Ubicación */}
         <div className="flex items-center gap-4 text-sm text-gray-400">
-          <span>{user.city}, {user.country}</span>
+          <span className="flex items-center gap-1">
+            <MapPin className="w-4 h-4" />
+            {user.city}, {user.country}
+          </span>
           <span>•</span>
-          <span>Miembro desde {new Date(user.registrationDate).toLocaleDateString('es-ES')}</span>
+          <span className="flex items-center gap-1">
+            <Calendar className="w-4 h-4" />
+            Miembro desde {new Date(user.registrationDate).toLocaleDateString('es-ES')}
+          </span>
         </div>
       </div>
 
@@ -115,12 +139,9 @@ export default function UserProfile({ onLogout }: UserProfileProps) {
           <div className="flex items-center gap-2">
             <Award className="w-6 h-6 text-yellow-400" />
             <div>
-              <h3 className="text-lg font-bold text-white">Nivel {user.level}: {getLevelName(user.level)}</h3>
+              <h3 className="text-lg font-bold text-white">Nivel {user.level}: {levelInfo}</h3>
               <p className="text-xs text-gray-400">
-                {user.level < 5 
-                  ? `Siguiente nivel: ${getLevelName(user.level + 1)} (${(user.level * 5000).toLocaleString()} puntos)`
-                  : '¡Nivel máximo alcanzado!'
-                }
+                {nextLevel ? `Siguiente nivel: ${nextLevel} (${(user.level * 5000).toLocaleString()} puntos)` : '¡Nivel máximo alcanzado!'}
               </p>
             </div>
           </div>
@@ -138,52 +159,12 @@ export default function UserProfile({ onLogout }: UserProfileProps) {
               <motion.div
                 className="h-full bg-gradient-to-r from-orange-500 to-pink-500"
                 initial={{ width: 0 }}
-                animate={{ width: `${Math.min(progressToNextLevel, 100)}%` }}
+                animate={{ width: `${progressToNextLevel}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
               />
             </div>
             <p className="text-xs text-gray-400 mt-2 text-right">
               {progressToNextLevel.toFixed(1)}% completado
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Contador de tiempo de audiencia */}
-      <div className="rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl border border-white/10 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Clock className="w-6 h-6 text-blue-400" />
-          <h3 className="text-lg font-bold text-white">Tiempo de Audiencia</h3>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-white/5 rounded-xl p-4">
-            <p className="text-xs text-gray-400 mb-1">Tiempo total</p>
-            <p className="text-2xl font-bold text-white">{formatListeningTime(stats.totalListeningTime)}</p>
-          </div>
-          <div className="bg-white/5 rounded-xl p-4">
-            <p className="text-xs text-gray-400 mb-1">Sesión actual</p>
-            <p className="text-2xl font-bold text-white">
-              {stats.isListening ? formatListeningTime(currentSessionTime) : '0m'}
-            </p>
-          </div>
-        </div>
-
-        {stats.isListening && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <p className="text-sm text-green-400">
-                Escuchando ahora - Ganando 10 puntos por minuto
-              </p>
-            </div>
-          </div>
-        )}
-
-        {!stats.isListening && (
-          <div className="bg-gray-500/10 border border-gray-500/20 rounded-xl p-4">
-            <p className="text-sm text-gray-400 text-center">
-              Empieza a escuchar música para ganar puntos
             </p>
           </div>
         )}
@@ -196,7 +177,7 @@ export default function UserProfile({ onLogout }: UserProfileProps) {
           whileHover={{ scale: 1.02 }}
         >
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-5 h-5 text-green-400" />
+            <Calendar className="w-5 h-5 text-blue-400" />
             <span className="text-xs text-gray-400">Días activo</span>
           </div>
           <p className="text-xl font-bold text-white">{stats.daysSinceRegistration}</p>
@@ -207,18 +188,7 @@ export default function UserProfile({ onLogout }: UserProfileProps) {
           whileHover={{ scale: 1.02 }}
         >
           <div className="flex items-center gap-2 mb-2">
-            <ShoppingBag className="w-5 h-5 text-orange-400" />
-            <span className="text-xs text-gray-400">Productos canjeados</span>
-          </div>
-          <p className="text-xl font-bold text-white">{stats.productsRedeemed}</p>
-        </motion.div>
-
-        <motion.div
-          className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4"
-          whileHover={{ scale: 1.02 }}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Award className="w-5 h-5 text-yellow-400" />
+            <Award className="w-5 h-5 text-green-400" />
             <span className="text-xs text-gray-400">Logros</span>
           </div>
           <p className="text-xl font-bold text-white">{user.achievements.length}</p>
@@ -229,49 +199,103 @@ export default function UserProfile({ onLogout }: UserProfileProps) {
           whileHover={{ scale: 1.02 }}
         >
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-5 h-5 text-blue-400" />
-            <span className="text-xs text-gray-400">Horas escuchadas</span>
+            <User className="w-5 h-5 text-purple-400" />
+            <span className="text-xs text-gray-400">Emisoras escuchadas</span>
           </div>
-          <p className="text-xl font-bold text-white">{Math.floor(stats.totalListeningTime / 3600)}</p>
+          <p className="text-xl font-bold text-white">{user.stationsListened.length}</p>
+        </motion.div>
+
+        <motion.div
+          className="rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 p-4"
+          whileHover={{ scale: 1.02 }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Mail className="w-5 h-5 text-orange-400" />
+            <span className="text-xs text-gray-400">Tiempo escuchando</span>
+          </div>
+          <p className="text-xl font-bold text-white">{formatListeningTime(user.totalListeningTime + currentTime)}</p>
         </motion.div>
       </div>
 
-      {/* Productos canjeados */}
-      {user.redeemedProducts.length > 0 && (
+      {/* Cuentas vinculadas */}
+      <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <Link2 className="w-5 h-5 text-blue-400" />
+          Cuentas Vinculadas
+        </h3>
+        <div className="space-y-3">
+          {oauthProviders.map((provider) => {
+            const isLinked = linkedProviders.includes(provider.id);
+            const isPrimary = user.oauthProvider === provider.id;
+            
+            return (
+              <div
+                key={provider.id}
+                className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{provider.icon}</span>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{provider.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {isLinked ? (
+                        isPrimary ? (
+                          <span className="text-green-400">Cuenta principal</span>
+                        ) : (
+                          <span className="text-blue-400">Vinculada</span>
+                        )
+                      ) : (
+                        <span className="text-gray-500">No vinculada</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                
+                {isLinked && !isPrimary && (
+                  <button
+                    onClick={() => handleUnlinkProvider(provider.id)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 text-xs font-medium transition-all"
+                  >
+                    <Unlink className="w-3 h-3" />
+                    Desvincular
+                  </button>
+                )}
+                
+                {!isLinked && (
+                  <button
+                    onClick={() => {
+                      // Aquí iría la lógica para vincular cuenta
+                      alert(`Para vincular ${provider.name}, implementa el flujo OAuth en el backend`);
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 text-xs font-medium transition-all"
+                  >
+                    <Link2 className="w-3 h-3" />
+                    Vincular
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Logros */}
+      {user.achievements.length > 0 && (
         <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
           <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-orange-400" />
-            Mis Productos Canjeados
+            <Award className="w-5 h-5 text-yellow-400" />
+            Logros Desbloqueados
           </h3>
-          <div className="space-y-3">
-            {user.redeemedProducts.slice(0, 5).map((product, index) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {user.achievements.map((achievement: string, index: number) => (
               <motion.div
                 key={index}
-                className="flex items-center justify-between p-3 rounded-xl bg-white/5"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                className="p-3 rounded-xl bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div>
-                  <p className="text-sm font-semibold text-white">{product.productName}</p>
-                  <p className="text-xs text-gray-400">{product.brand}</p>
-                  <p className="text-xs text-gray-500">
-                    Canjeado: {new Date(product.redeemedAt).toLocaleDateString('es-ES')}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-orange-400">-{product.pointsSpent.toLocaleString()}</p>
-                  <p className="text-xs text-gray-400">puntos</p>
-                  <p className={`text-xs mt-1 ${
-                    product.deliveryStatus === 'delivered' ? 'text-green-400' :
-                    product.deliveryStatus === 'shipped' ? 'text-blue-400' :
-                    'text-yellow-400'
-                  }`}>
-                    {product.deliveryStatus === 'delivered' ? 'Entregado' :
-                     product.deliveryStatus === 'shipped' ? 'Enviado' :
-                     'Pendiente'}
-                  </p>
-                </div>
+                <p className="text-xs text-yellow-400 font-semibold">{achievement}</p>
               </motion.div>
             ))}
           </div>

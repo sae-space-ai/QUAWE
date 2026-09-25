@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, User, Phone, MapPin, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 import { registerUser, verifyUser, loginUser } from '../services/authSystem';
+import { initiateOAuth, oauthProviders } from '../services/oauthSystem';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -169,6 +170,52 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             </motion.div>
           )}
 
+          {/* OAuth Social Login Buttons */}
+          {(mode === 'login' || mode === 'register') && (
+            <div className="mb-6">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-slate-900 px-2 text-gray-400">O continúa con</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {oauthProviders.slice(0, 4).map((provider) => (
+                  <motion.button
+                    key={provider.id}
+                    onClick={() => initiateOAuth(provider.id)}
+                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm font-medium text-white"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span className="text-lg">{provider.icon}</span>
+                    <span>{provider.name}</span>
+                  </motion.button>
+                ))}
+              </div>
+
+              {oauthProviders.length > 4 && (
+                <div className="grid grid-cols-1 gap-3 mt-3">
+                  {oauthProviders.slice(4).map((provider) => (
+                    <motion.button
+                      key={provider.id}
+                      onClick={() => initiateOAuth(provider.id)}
+                      className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm font-medium text-white"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span className="text-lg">{provider.icon}</span>
+                      <span>Continuar con {provider.name}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Login Form */}
           {mode === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
@@ -209,6 +256,15 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               >
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
               </button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-slate-900 px-2 text-gray-400">O usa tu email</span>
+                </div>
+              </div>
 
               <p className="text-sm text-gray-400 text-center">
                 ¿No tienes cuenta?{' '}
@@ -339,6 +395,15 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               >
                 {loading ? 'Registrando...' : 'Crear Cuenta'}
               </button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-slate-900 px-2 text-gray-400">O usa tu email</span>
+                </div>
+              </div>
 
               <p className="text-sm text-gray-400 text-center">
                 ¿Ya tienes cuenta?{' '}

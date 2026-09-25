@@ -875,7 +875,7 @@ export default function App() {
           <AuthorBooksShowcase />
         ) : showUserProfile ? (
           // Perfil de Usuario
-          <UserProfile onLogout={() => {
+          <UserProfile onClose={() => {
             setShowUserProfile(false);
             setIsUserLoggedIn(false);
           }} />
