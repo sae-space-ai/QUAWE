@@ -787,6 +787,19 @@ export default function App() {
                     👤 Mi Perfil
                   </button>
                   <button
+                    onClick={() => {
+                      if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+                        localStorage.removeItem('quawe_current_user');
+                        setIsUserLoggedIn(false);
+                        setShowUserProfile(false);
+                        window.location.reload();
+                      }
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400"
+                  >
+                    🚪 Cerrar Sesión
+                  </button>
+                  <button
                     onClick={() => setShowPremiumModal(true)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                       isPremium
