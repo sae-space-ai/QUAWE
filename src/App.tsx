@@ -35,6 +35,7 @@ import { Megaphone } from 'lucide-react';
 import PointsDashboard from './components/PointsDashboard';
 import ProductCatalog from './components/ProductCatalog';
 import { earnPointsForListening } from './services/pointsSystem';
+import { startAdScheduler, stopAdScheduler, pauseAdScheduler, resumeAdScheduler } from './services/adScheduler';
 
 // ============================================
 // Visualizador de Audio
