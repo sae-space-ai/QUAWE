@@ -73,7 +73,7 @@ function rotateHost(): void {
 }
 
 // API Key de Audius (pública para desarrollo)
-const API_KEY = 'pulsar-fm-app';
+const API_KEY = 'quawe-radio-app';
 
 /**
  * Obtener perfil de usuario por handle

@@ -1,10 +1,10 @@
-# 🎵 PULSAR FM - Tu Frecuencia Universal
+# 🎵 Radio Quawe - Tu Frecuencia Universal
 
-**PULSAR FM** es una cadena radiofónica global que transmite desde el corazón del cosmos. Como una estrella pulsar que emite pulsos rítmicos de energía, nuestra plataforma transmite música en streaming con geolocalización inteligente y publicidad local segmentada.
+**Radio Quawe** es una cadena radiofónica global que transmite música en streaming con geolocalización inteligente, publicidad local segmentada y canales temáticos especializados.
 
-## 🌟 ¿Por qué PULSAR FM?
+## 🌟 ¿Por qué Radio Quawe?
 
-Un **pulsar** es una estrella de neutrones que gira rápidamente y emite haces de radiación electromagnética. Estos pulsos son tan precisos que se usan como relojes cósmicos. En PULSAR FM, cada emisora es un pulsar que emite su señal única a través del éter digital, conectando oyentes en todo el mundo.
+Radio Quawe es tu plataforma de radio personalizada que conecta oyentes en todo el mundo a través de 101 emisoras geolocalizadas y 10 canales temáticos especializados, todo transmitiendo la música de Prof. Manuel Gago desde Audius.
 
 ## 🚀 Características Principales
 
@@ -14,7 +14,7 @@ Un **pulsar** es una estrella de neutrones que gira rápidamente y emite haces d
 - **Control de volumen** independiente por emisora
 - **Play/Pause/Skip** con transiciones suaves
 - **Mini player** persistente en la parte inferior
-- **✅ CORREGIDO**: Todas las emisoras PULSAR reproducen música de Audius correctamente
+- **✅ CORREGIDO**: Todas las emisoras Quawe reproducen música de Audius correctamente
 - **Auto-play** del primer track al seleccionar emisora
 
 ### 🌍 Geolocalización Inteligente
@@ -71,23 +71,23 @@ Un **pulsar** es una estrella de neutrones que gira rápidamente y emite haces d
 ## ✅ Solución Definitiva (v3.0.0)
 
 ### 🎯 Problema Resuelto
-Las emisoras PULSAR no reproducían la música de Audius. El sistema era demasiado complejo con múltiples componentes y estados.
+Las emisoras Quawe no reproducían la música de Audius. El sistema era demasiado complejo con múltiples componentes y estados.
 
 ### 🔧 Solución Implementada
-- **Reproducción directa**: Al hacer clic en cualquier emisora PULSAR, se obtiene una URL de streaming de Audius y se reproduce inmediatamente
+- **Reproducción directa**: Al hacer clic en cualquier emisora Quawe, se obtiene una URL de streaming de Audius y se reproduce inmediatamente
 - **Selección aleatoria**: Cada clic selecciona un track diferente de los 10 primeros del artista
 - **Simplificación total**: Se eliminó el componente `PulsarOriginal` complejo y se reutiliza el reproductor principal
 - **Flujo simple**: Click → Obtener URL → Reproducir
 
 ### 🎵 Cómo Funciona
-1. Usuario hace clic en cualquier emisora PULSAR
+1. Usuario hace clic en cualquier emisora Quawe
 2. El sistema obtiene los tracks de Audius del artista
 3. Selecciona uno aleatoriamente
 4. Obtiene la URL de streaming
 5. Reproduce inmediatamente usando el reproductor principal
 
 ### 🎯 Resultado
-- ✅ Todas las 11 emisoras PULSAR reproducen música de Audius
+- ✅ Todas las 101 emisoras Quawe reproducen música de Audius
 - ✅ Reproducción inmediata al hacer clic
 - ✅ Sin componentes complejos
 - ✅ Flujo simple e intuitivo
@@ -145,15 +145,15 @@ npm run preview
 
 ### 🎨 Identidad Visual
 
-- **Nombre**: PULSAR FM
+- **Nombre**: Radio Quawe
 - **Tagline**: Tu Frecuencia Universal
 - **Colores**: Naranja eléctrico (#FF6B35), Rosa cósmico (#E91E8C), Púrpura profundo (#6B2FA0)
-- **Logo**: Estrella pulsar con ondas concéntricas expandiéndose
+- **Logo**: Ondas de radio animadas con gradiente naranja-rosa-púrpura
 - **Tipografía**: Bold, moderna, con gradientes
 
-### 🎵 PULSAR Original - Canal del Artista
+### 🎵 Quawe Original - Canal del Artista
 
-**PULSAR FM** cuenta con un canal oficial integrado con **Audius**, la plataforma de streaming de música descentralizada.
+**Radio Quawe** cuenta con un canal oficial integrado con **Audius**, la plataforma de streaming de música descentralizada.
 
 **Artista Oficial**: Prof. Manuel Gago
 - **Perfil**: [@profmanuelgago](https://audius.co/profmanuelgago)
@@ -168,9 +168,9 @@ npm run preview
 
 Ver más detalles en [AUDIUS_INTEGRATION.md](./AUDIUS_INTEGRATION.md)
 
-### 🌍 Red PULSAR Local - 10 Ciudades Geolocalizadas
+### 🌍 Red Quawe Local - 100 Ciudades Geolocalizadas
 
-**PULSAR FM** opera una red de 10 emisoras virtuales geolocalizadas en las principales ciudades hispanohablantes del mundo. Cada emisora reproduce exclusivamente la música de Prof. Manuel Gago.
+**Radio Quawe** opera una red de 100 emisoras virtuales geolocalizadas en las principales ciudades hispanohablantes del mundo. Cada emisora reproduce exclusivamente la música de Prof. Manuel Gago.
 
 **Cobertura**:
 - 🇪🇸 **España**: Madrid, Barcelona

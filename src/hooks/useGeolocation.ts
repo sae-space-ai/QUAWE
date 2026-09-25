@@ -32,7 +32,7 @@ export function useGeolocation() {
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`,
               {
                 headers: {
-                  'User-Agent': 'PulsarFM/1.0 (https://pulsarfm.app)',
+                  'User-Agent': 'RadioQuawe/1.0 (https://radioquawe.app)',
                 },
               }
             );

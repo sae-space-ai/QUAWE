@@ -92,7 +92,7 @@ export const useRadioStore = create<RadioState>()(
       setSleepTimer: (minutes) => set({ sleepTimerMinutes: minutes }),
     }),
     {
-      name: 'pulsar-fm-storage',
+      name: 'radio-quawe-storage',
       partialize: (state) => ({
         favorites: state.favorites,
         history: state.history,
