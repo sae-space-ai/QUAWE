@@ -1,5 +1,8 @@
 // Audius API Integration
 // Documentación: https://api.audius.co
+// Optimizado con sistema de caché para reducir tiempos de respuesta
+
+import { cache, CACHE_KEYS, getCachedTracks, getCachedStreamUrl } from './cacheManager';
 
 export interface AudiusTrack {
   id: string;
@@ -97,28 +100,31 @@ export async function getUserByHandle(handle: string): Promise<AudiusUser | null
 }
 
 /**
- * Obtener tracks de un usuario por handle
+ * Obtener tracks de un usuario por handle (CON CACHÉ)
  */
 export async function getUserTracks(
   handle: string,
   limit: number = 100,
   offset: number = 0
 ): Promise<AudiusTrack[]> {
-  try {
-    const url = `${getHost()}/v1/users/handle/${handle}/tracks?limit=${limit}&offset=${offset}&app_name=${API_KEY}`;
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Error fetching tracks: ${response.statusText}`);
+  // Usar caché para obtener tracks
+  return getCachedTracks(handle, async () => {
+    try {
+      const url = `${getHost()}/v1/users/handle/${handle}/tracks?limit=${limit}&offset=${offset}&app_name=${API_KEY}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching tracks: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      console.error('Error fetching Audius tracks:', error);
+      rotateHost();
+      return [];
     }
-    
-    const data = await response.json();
-    return data.data;
-  } catch (error) {
-    console.error('Error fetching Audius tracks:', error);
-    rotateHost();
-    return [];
-  }
+  });
 }
 
 /**
@@ -212,25 +218,28 @@ export async function getPlaylistTracks(playlistId: string): Promise<AudiusTrack
 }
 
 /**
- * Obtener URL de streaming de un track
+ * Obtener URL de streaming de un track (CON CACHÉ)
  */
 export async function getTrackStreamUrl(trackId: string): Promise<string | null> {
-  try {
-    const url = `${getHost()}/v1/tracks/${trackId}/stream?app_name=${API_KEY}`;
-    
-    // Audius redirige a la URL de streaming real
-    const response = await fetch(url, { redirect: 'follow' });
-    
-    if (!response.ok) {
-      throw new Error(`Error fetching stream URL: ${response.statusText}`);
+  // Usar caché para obtener URL de streaming
+  return getCachedStreamUrl(trackId, async () => {
+    try {
+      const url = `${getHost()}/v1/tracks/${trackId}/stream?app_name=${API_KEY}`;
+      
+      // Audius redirige a la URL de streaming real
+      const response = await fetch(url, { redirect: 'follow' });
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching stream URL: ${response.statusText}`);
+      }
+      
+      return response.url;
+    } catch (error) {
+      console.error('Error fetching stream URL:', error);
+      rotateHost();
+      return null;
     }
-    
-    return response.url;
-  } catch (error) {
-    console.error('Error fetching stream URL:', error);
-    rotateHost();
-    return null;
-  }
+  });
 }
 
 /**

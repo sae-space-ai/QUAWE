@@ -242,42 +242,15 @@ export default function App() {
     };
   }, [isPlaying, currentStation]);
 
-  // Sistema de cuñas publicitarias automáticas cada minuto
-  useEffect(() => {
-    if (!isPlaying || !currentStation) {
-      stopAdScheduler();
-      return;
-    }
-
-    // Determinar si es un canal temático
-    const isThematic = currentStation.stationuuid.startsWith('quawe-') && 
-                       currentStation.stationuuid !== 'quawe-original' &&
-                       !localQuaweStations.some(ls => ls.station.stationuuid === currentStation.stationuuid);
-    
-    const channelId = isThematic ? currentStation.tags.split(',')[1] : null;
-
-    // Iniciar el programador de anuncios
-    startAdScheduler(
-      currentStation.stationuuid,
-      channelId,
-      // Callback cuando inicia un anuncio
-      () => {
-        setIsPlaying(false); // Pausar música
-        setIsAdPlayingState(true); // Mostrar overlay de anuncio
-        setAdCountdown(12);
-      },
-      // Callback cuando termina un anuncio
-      () => {
-        setIsAdPlayingState(false); // Ocultar overlay
-        setAdCountdown(0);
-        setIsPlaying(true); // Reanudar música
-      }
-    );
-
-    return () => {
-      stopAdScheduler();
-    };
-  }, [isPlaying, currentStation]);
+  // Sistema de cuñas publicitarias DESACTIVADO para mejorar rendimiento
+  // Los anuncios solo se reproducen al inicio de cada emisora, no cada minuto
+  // useEffect(() => {
+  //   if (!isPlaying || !currentStation) {
+  //     stopAdScheduler();
+  //     return;
+  //   }
+  //   ... código de anuncios automáticos ...
+  // }, [isPlaying, currentStation]);
 
   // Función para reproducir anuncio local de 12 segundos
   const playStationAd = async (city: string) => {
@@ -386,7 +359,9 @@ export default function App() {
 
   // Función para obtener URL de streaming de Audius
   const getAudiusStreamUrl = async (stationId?: string): Promise<string | null> => {
+    const startTime = performance.now();
     try {
+      // Obtener tracks (usando caché si está disponible)
       const tracks = await getUserTracks('profmanuelgago', 100);
       if (tracks.length === 0) return null;
       
@@ -401,11 +376,21 @@ export default function App() {
         return null;
       }
       
+      // Obtener URL de streaming (usando caché si está disponible)
       const streamUrl = await getTrackStreamUrl(nextTrack.id);
       
-      // Log de estadísticas de la cola
+      // Precargar el siguiente track en background
+      const nextNextTrack = await getNextTrack(id, tracks);
+      if (nextNextTrack) {
+        getTrackStreamUrl(nextNextTrack.id).catch(err => 
+          console.warn('[Precarga] Error precargando siguiente track:', err)
+        );
+      }
+      
+      // Log de estadísticas de la cola y tiempo de respuesta
       const stats = getQueueStats(id);
-      console.log(`[Stream] Cola ${id}: ${stats.queueSize} en cola, ${stats.historySize} en historial`);
+      const responseTime = (performance.now() - startTime).toFixed(0);
+      console.log(`[Stream] Cola ${id}: ${stats.queueSize} en cola, ${stats.historySize} en historial | Tiempo: ${responseTime}ms`);
       
       return streamUrl;
     } catch (error) {
@@ -414,38 +399,25 @@ export default function App() {
     }
   };
 
-  // Función para obtener URL de streaming de Audius filtrada por canal temático
+  // Función para obtener URL de streaming de Audius filtrada por canal temático (OPTIMIZADA)
   const getAudiusStreamUrlByChannel = async (channel: ThematicChannel, stationId?: string): Promise<string | null> => {
+    const startTime = performance.now();
     try {
-      // 1. Buscar en tracks directos
+      // 1. Obtener tracks (usando caché)
       const allTracks = await getUserTracks('profmanuelgago', 100);
+      
+      // 2. Filtrar por canal (solo tracks directos, sin buscar en álbumes/playlists para velocidad)
       const tracksFromDirect = filterTracksByChannel(allTracks, channel);
       
-      // 2. Buscar en álbumes y playlists
-      const tracksFromAlbumsPlaylists = await searchInAlbumsAndPlaylists(
-        'profmanuelgago',
-        channel,
-        getUserAlbums,
-        getUserPlaylists,
-        getAlbumTracks,
-        getPlaylistTracks
-      );
-      
-      // 3. Combinar resultados (eliminar duplicados)
-      const allMatches = [...tracksFromDirect, ...tracksFromAlbumsPlaylists];
-      const uniqueTracks = Array.from(
-        new Map(allMatches.map(track => [track.id, track])).values()
-      );
-      
-      // 4. Si no hay matches, usar todos los tracks
-      const tracksToUse = uniqueTracks.length > 0 ? uniqueTracks : allTracks;
+      // 3. Si no hay matches, usar todos los tracks
+      const tracksToUse = tracksFromDirect.length > 0 ? tracksFromDirect : allTracks;
       
       if (tracksToUse.length === 0) {
         console.error('No tracks available');
         return null;
       }
       
-      // 5. Usar sistema de colas para evitar repeticiones
+      // 4. Usar sistema de colas para evitar repeticiones
       const id = stationId || `channel-${channel.id}`;
       const nextTrack = await getNextTrack(id, tracksToUse);
       
@@ -454,11 +426,21 @@ export default function App() {
         return null;
       }
       
+      // 5. Obtener URL de streaming (usando caché)
       const streamUrl = await getTrackStreamUrl(nextTrack.id);
       
-      // Log de estadísticas de la cola
+      // 6. Precargar el siguiente track en background
+      const nextNextTrack = await getNextTrack(id, tracksToUse);
+      if (nextNextTrack) {
+        getTrackStreamUrl(nextNextTrack.id).catch(err => 
+          console.warn('[Precarga] Error precargando siguiente track:', err)
+        );
+      }
+      
+      // Log de estadísticas de la cola y tiempo de respuesta
       const stats = getQueueStats(id);
-      console.log(`[Stream] Canal ${channel.name} (${id}): ${stats.queueSize} en cola, ${stats.historySize} en historial`);
+      const responseTime = (performance.now() - startTime).toFixed(0);
+      console.log(`[Stream] Canal ${channel.name} (${id}): ${stats.queueSize} en cola, ${stats.historySize} en historial | Tiempo: ${responseTime}ms`);
       
       return streamUrl;
     } catch (error) {
@@ -479,6 +461,31 @@ export default function App() {
   // Cargar emisoras al inicio
   useEffect(() => {
     loadQuaweStations();
+    
+    // Precargar tracks en background para reducir tiempo de primera reproducción
+    const preloadTracks = async () => {
+      try {
+        console.log('[Precarga] Iniciando precarga de tracks...');
+        const tracks = await getUserTracks('profmanuelgago', 20);
+        
+        if (tracks.length > 0) {
+          // Precargar URLs de los primeros 5 tracks
+          const firstFive = tracks.slice(0, 5);
+          const preloadPromises = firstFive.map(track => 
+            getTrackStreamUrl(track.id).catch(err => 
+              console.warn('[Precarga] Error precargando track:', track.id, err)
+            )
+          );
+          
+          await Promise.all(preloadPromises);
+          console.log('[Precarga] Precarga completada para', firstFive.length, 'tracks');
+        }
+      } catch (error) {
+        console.warn('[Precarga] Error en precarga inicial:', error);
+      }
+    };
+    
+    preloadTracks();
   }, []);
 
   // Búsqueda simple en las emisoras Quawe
