@@ -22,9 +22,9 @@ import QuaweOriginal from './components/QuaweOriginal';
 import LocalStationsGrid from './components/LocalStationsGrid';
 import ThematicChannels from './components/ThematicChannels';
 import { localQuaweStations, getLocalStation, LocalQuaweStation } from './data/quaweStations';
-import { thematicChannels, ThematicChannel, filterTracksByChannel } from './data/thematicChannels';
+import { thematicChannels, ThematicChannel, filterTracksByChannel, searchInAlbumsAndPlaylists } from './data/thematicChannels';
 import { getAllThematicStations, ThematicStation } from './data/thematicStations';
-import { getUserTracks, getTrackStreamUrl } from './services/audiusApi';
+import { getUserTracks, getTrackStreamUrl, getUserAlbums, getUserPlaylists, getAlbumTracks, getPlaylistTracks } from './services/audiusApi';
 
 // ============================================
 // Visualizador de Audio
@@ -194,18 +194,40 @@ export default function App() {
   // Función para obtener URL de streaming de Audius filtrada por canal temático
   const getAudiusStreamUrlByChannel = async (channel: ThematicChannel): Promise<string | null> => {
     try {
-      const allTracks = await getUserTracks('profmanuelgago', 50);
-      if (allTracks.length === 0) return null;
+      // 1. Buscar en tracks directos
+      const allTracks = await getUserTracks('profmanuelgago', 100);
+      const tracksFromDirect = filterTracksByChannel(allTracks, channel);
       
-      // Filtrar tracks por canal temático
-      const filteredTracks = filterTracksByChannel(allTracks, channel);
+      // 2. Buscar en álbumes y playlists
+      const tracksFromAlbumsPlaylists = await searchInAlbumsAndPlaylists(
+        'profmanuelgago',
+        channel,
+        getUserAlbums,
+        getUserPlaylists,
+        getAlbumTracks,
+        getPlaylistTracks
+      );
       
-      // Si no hay tracks del canal, usar todos los tracks
-      const tracksToUse = filteredTracks.length > 0 ? filteredTracks : allTracks;
+      // 3. Combinar resultados (eliminar duplicados)
+      const allMatches = [...tracksFromDirect, ...tracksFromAlbumsPlaylists];
+      const uniqueTracks = Array.from(
+        new Map(allMatches.map(track => [track.id, track])).values()
+      );
       
-      // Seleccionar un track aleatorio
+      // 4. Si no hay matches, usar todos los tracks
+      const tracksToUse = uniqueTracks.length > 0 ? uniqueTracks : allTracks;
+      
+      if (tracksToUse.length === 0) {
+        console.error('No tracks available');
+        return null;
+      }
+      
+      // 5. Seleccionar un track aleatorio
       const randomTrack = tracksToUse[Math.floor(Math.random() * tracksToUse.length)];
       const streamUrl = await getTrackStreamUrl(randomTrack.id);
+      
+      console.log(`Canal ${channel.name}: ${tracksToUse.length} tracks encontrados`);
+      
       return streamUrl;
     } catch (error) {
       console.error('Error getting Audius stream by channel:', error);

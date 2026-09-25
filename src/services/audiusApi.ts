@@ -101,7 +101,7 @@ export async function getUserByHandle(handle: string): Promise<AudiusUser | null
  */
 export async function getUserTracks(
   handle: string,
-  limit: number = 50,
+  limit: number = 100,
   offset: number = 0
 ): Promise<AudiusTrack[]> {
   try {
@@ -116,6 +116,96 @@ export async function getUserTracks(
     return data.data;
   } catch (error) {
     console.error('Error fetching Audius tracks:', error);
+    rotateHost();
+    return [];
+  }
+}
+
+/**
+ * Obtener álbumes de un usuario por handle
+ */
+export async function getUserAlbums(
+  handle: string,
+  limit: number = 50
+): Promise<any[]> {
+  try {
+    const url = `${getHost()}/v1/users/handle/${handle}/albums?limit=${limit}&app_name=${API_KEY}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Error fetching albums: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Error fetching Audius albums:', error);
+    rotateHost();
+    return [];
+  }
+}
+
+/**
+ * Obtener playlists de un usuario por handle
+ */
+export async function getUserPlaylists(
+  handle: string,
+  limit: number = 50
+): Promise<any[]> {
+  try {
+    const url = `${getHost()}/v1/users/handle/${handle}/playlists?limit=${limit}&app_name=${API_KEY}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Error fetching playlists: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Error fetching Audius playlists:', error);
+    rotateHost();
+    return [];
+  }
+}
+
+/**
+ * Obtener tracks de un álbum específico
+ */
+export async function getAlbumTracks(albumId: string): Promise<AudiusTrack[]> {
+  try {
+    const url = `${getHost()}/v1/albums/${albumId}?app_name=${API_KEY}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Error fetching album tracks: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data?.tracks || [];
+  } catch (error) {
+    console.error('Error fetching album tracks:', error);
+    rotateHost();
+    return [];
+  }
+}
+
+/**
+ * Obtener tracks de una playlist específica
+ */
+export async function getPlaylistTracks(playlistId: string): Promise<AudiusTrack[]> {
+  try {
+    const url = `${getHost()}/v1/playlists/${playlistId}?app_name=${API_KEY}`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Error fetching playlist tracks: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data.data?.tracks || [];
+  } catch (error) {
+    console.error('Error fetching playlist tracks:', error);
     rotateHost();
     return [];
   }
