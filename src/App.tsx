@@ -1,485 +1,654 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Github, Star, GitFork, AlertCircle, Clock, ExternalLink,
-  CheckCircle2, XCircle, Loader2, GitBranch, Code2, Zap,
-  TrendingUp, GitPullRequest, MessageSquare, PlayCircle,
-  Package, Shield, Activity
-} from "lucide-react";
+  Radio, Play, Pause, Volume2, VolumeX, Heart, Search,
+  MapPin, Clock, Music, Share2, Moon, Sun, Menu, X,
+  TrendingUp, Globe, Headphones, SkipForward, SkipBack,
+  Timer, Trash2, ExternalLink, Star, Zap, MessageCircle,
+  Send, ChevronDown, Filter, RefreshCw
+} from 'lucide-react';
+import { useRadioStore } from './store/radioStore';
+import { useGeolocation } from './hooks/useGeolocation';
+import { useAudioPlayer } from './hooks/useAudioPlayer';
 import {
-  repositories,
-  deployments,
-  pipelines,
-  activities,
-  generateContributions,
-  stats,
-  Repository,
-  Deployment,
-  Pipeline,
-} from "./data/githubData";
+  searchStationsByName,
+  getTopStations,
+  getStationsByTag,
+  getStationsByCountry,
+  getGenreEmoji,
+  getGenreColor,
+  formatListeners,
+} from './services/radioApi';
+import { genres, localAds, chatMessages, scheduleItems, sleepTimerOptions, popularCountries } from './data/constants';
+import { Station } from './types';
 
 // ============================================
-// Contribution Graph Component
+// Visualizador de Audio
 // ============================================
-function ContributionGraph() {
-  const contributions = generateContributions();
-  const weeks = [];
-  
-  for (let i = 0; i < contributions.length; i += 7) {
-    weeks.push(contributions.slice(i, i + 7));
-  }
+function AudioVisualizer({ getAnalyserData, isPlaying, color }: {
+  getAnalyserData: () => Uint8Array | null;
+  isPlaying: boolean;
+  color: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
 
-  const getLevelColor = (level: number) => {
-    const colors = [
-      "bg-gray-800/50",
-      "bg-green-900/60",
-      "bg-green-700/70",
-      "bg-green-500/80",
-      "bg-green-400",
-    ];
-    return colors[level];
-  };
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const animate = () => {
+      const { width, height } = canvas;
+      ctx.clearRect(0, 0, width, height);
+
+      const data = getAnalyserData();
+      const barCount = 64;
+      const barWidth = width / barCount - 2;
+
+      for (let i = 0; i < barCount; i++) {
+        let barHeight: number;
+        
+        if (data && isPlaying) {
+          const dataIndex = Math.floor((i / barCount) * data.length);
+          barHeight = (data[dataIndex] / 255) * height * 0.9;
+        } else {
+          barHeight = isPlaying ? Math.random() * 20 + 5 : 2;
+        }
+
+        const x = i * (barWidth + 2);
+        const y = height - barHeight;
+
+        const gradient = ctx.createLinearGradient(x, y, x, height);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(1, `${color}33`);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(x, y, barWidth, barHeight, 2);
+        ctx.fill();
+      }
+
+      animRef.current = requestAnimationFrame(animate);
+    };
+
+    animate();
+    return () => cancelAnimationFrame(animRef.current);
+  }, [isPlaying, color, getAnalyserData]);
 
   return (
-    <div className="rounded-xl bg-gray-900/50 border border-gray-800 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-          <Activity className="w-4 h-4 text-green-400" />
-          Contribuciones
-        </h3>
-        <span className="text-xs text-gray-400">
-          {contributions.reduce((sum, c) => sum + c.count, 0)} contribuciones en el último año
-        </span>
-      </div>
-      
-      <div className="flex gap-1 overflow-x-auto pb-2">
-        {weeks.map((week, weekIdx) => (
-          <div key={weekIdx} className="flex flex-col gap-1">
-            {week.map((day, dayIdx) => (
-              <motion.div
-                key={`${weekIdx}-${dayIdx}`}
-                className={`w-3 h-3 rounded-sm ${getLevelColor(day.level)} cursor-pointer`}
-                whileHover={{ scale: 1.3 }}
-                title={`${day.count} contribuciones el ${day.date}`}
-              />
-            ))}
-          </div>
-        ))}
-      </div>
-      
-      <div className="flex items-center gap-2 mt-3 text-xs text-gray-400">
-        <span>Menos</span>
-        <div className="flex gap-1">
-          {[0, 1, 2, 3, 4].map((level) => (
-            <div key={level} className={`w-3 h-3 rounded-sm ${getLevelColor(level)}`} />
-          ))}
-        </div>
-        <span>Más</span>
-      </div>
-    </div>
+    <canvas
+      ref={canvasRef}
+      width={600}
+      height={100}
+      className="w-full h-24 rounded-xl"
+    />
   );
 }
 
 // ============================================
-// Repository Card Component
-// ============================================
-function RepoCard({ repo }: { repo: Repository }) {
-  return (
-    <motion.div
-      className="rounded-xl bg-gray-900/50 border border-gray-800 p-5 hover:border-gray-700 transition-all"
-      whileHover={{ y: -2 }}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Package className="w-4 h-4 text-gray-400" />
-          <h3 className="text-sm font-semibold text-white">{repo.name}</h3>
-          {repo.isPrivate && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
-              Private
-            </span>
-          )}
-        </div>
-        <a
-          href={repo.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-gray-400 hover:text-white transition-colors"
-        >
-          <ExternalLink className="w-4 h-4" />
-        </a>
-      </div>
-      
-      <p className="text-xs text-gray-400 mb-4 line-clamp-2">{repo.description}</p>
-      
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {repo.topics.slice(0, 3).map((topic) => (
-          <span
-            key={topic}
-            className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20"
-          >
-            {topic}
-          </span>
-        ))}
-      </div>
-      
-      <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-gray-400">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: repo.languageColor }}
-            />
-            {repo.language}
-          </span>
-          <span className="flex items-center gap-1 text-gray-400">
-            <Star className="w-3 h-3" />
-            {repo.stars}
-          </span>
-          <span className="flex items-center gap-1 text-gray-400">
-            <GitFork className="w-3 h-3" />
-            {repo.forks}
-          </span>
-        </div>
-        <span className="text-gray-500">{repo.lastUpdate}</span>
-      </div>
-    </motion.div>
-  );
-}
-
-// ============================================
-// Deployment Card Component
-// ============================================
-function DeploymentCard({ deployment }: { deployment: Deployment }) {
-  const getStatusIcon = () => {
-    switch (deployment.status) {
-      case "ready":
-        return <CheckCircle2 className="w-4 h-4 text-green-400" />;
-      case "building":
-        return <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />;
-      case "error":
-        return <XCircle className="w-4 h-4 text-red-400" />;
-      case "queued":
-        return <Clock className="w-4 h-4 text-yellow-400" />;
-    }
-  };
-
-  const getStatusColor = () => {
-    switch (deployment.status) {
-      case "ready":
-        return "text-green-400";
-      case "building":
-        return "text-blue-400";
-      case "error":
-        return "text-red-400";
-      case "queued":
-        return "text-yellow-400";
-    }
-  };
-
-  return (
-    <motion.div
-      className="rounded-xl bg-gray-900/50 border border-gray-800 p-4 hover:border-gray-700 transition-all"
-      whileHover={{ x: 4 }}
-    >
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          {getStatusIcon()}
-          <div>
-            <h4 className="text-sm font-semibold text-white">{deployment.projectName}</h4>
-            <p className="text-[10px] text-gray-500">{deployment.createdAt}</p>
-          </div>
-        </div>
-        <span className={`text-xs font-medium ${getStatusColor()}`}>
-          {deployment.status === "ready" ? "Listo" : 
-           deployment.status === "building" ? "Construyendo" :
-           deployment.status === "error" ? "Error" : "En cola"}
-        </span>
-      </div>
-      
-      <p className="text-xs text-gray-400 mb-3 line-clamp-1">{deployment.commitMessage}</p>
-      
-      <div className="flex items-center justify-between text-[10px] text-gray-500">
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1">
-            <GitBranch className="w-3 h-3" />
-            {deployment.branch}
-          </span>
-          <span>•</span>
-          <span className="font-mono">{deployment.commitHash}</span>
-        </div>
-        <span>{deployment.duration}</span>
-      </div>
-      
-      {deployment.status === "ready" && (
-        <a
-          href={deployment.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-        >
-          <ExternalLink className="w-3 h-3" />
-          Ver deployment
-        </a>
-      )}
-    </motion.div>
-  );
-}
-
-// ============================================
-// Pipeline Card Component
-// ============================================
-function PipelineCard({ pipeline }: { pipeline: Pipeline }) {
-  const getStatusIcon = () => {
-    switch (pipeline.status) {
-      case "success":
-        return <CheckCircle2 className="w-5 h-5 text-green-400" />;
-      case "failed":
-        return <XCircle className="w-5 h-5 text-red-400" />;
-      case "running":
-        return <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />;
-      case "pending":
-        return <Clock className="w-5 h-5 text-yellow-400" />;
-    }
-  };
-
-  const getStepStatusColor = (status: string) => {
-    switch (status) {
-      case "success":
-        return "bg-green-500";
-      case "failed":
-        return "bg-red-500";
-      case "running":
-        return "bg-blue-500 animate-pulse";
-      case "pending":
-        return "bg-gray-600";
-      case "skipped":
-        return "bg-gray-700";
-    }
-  };
-
-  return (
-    <div className="rounded-xl bg-gray-900/50 border border-gray-800 p-5">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          {getStatusIcon()}
-          <div>
-            <h4 className="text-sm font-semibold text-white">{pipeline.name}</h4>
-            <p className="text-xs text-gray-500">
-              {pipeline.branch} • {pipeline.startedAt}
-            </p>
-          </div>
-        </div>
-        <span className="text-xs text-gray-400">{pipeline.duration}</span>
-      </div>
-      
-      <div className="space-y-2">
-        {pipeline.steps.map((step, idx) => (
-          <div key={idx} className="flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${getStepStatusColor(step.status)}`} />
-            <span className="flex-1 text-xs text-gray-300">{step.name}</span>
-            <span className="text-xs text-gray-500">{step.duration}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Activity Item Component
-// ============================================
-function ActivityItem({ activity }: { activity: typeof activities[0] }) {
-  const getIcon = () => {
-    switch (activity.type) {
-      case "deploy":
-        return <Zap className="w-4 h-4 text-purple-400" />;
-      case "pr":
-        return <GitPullRequest className="w-4 h-4 text-green-400" />;
-      case "push":
-        return <Code2 className="w-4 h-4 text-blue-400" />;
-      case "issue":
-        return <AlertCircle className="w-4 h-4 text-orange-400" />;
-      case "review":
-        return <MessageSquare className="w-4 h-4 text-cyan-400" />;
-    }
-  };
-
-  return (
-    <div className="flex items-start gap-3 py-3 border-b border-gray-800 last:border-0">
-      <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-sm flex-shrink-0">
-        {activity.avatar}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-300">
-          <span className="font-semibold text-white">{activity.user}</span>{" "}
-          {activity.title}
-        </p>
-        <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-500">
-          <span>{activity.repo}</span>
-          <span>•</span>
-          <span>{activity.time}</span>
-        </div>
-      </div>
-      {getIcon()}
-    </div>
-  );
-}
-
-// ============================================
-// Main App Component
+// Componente Principal
 // ============================================
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"repos" | "deployments" | "pipelines">("repos");
+  const [stations, setStations] = useState<Station[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [chatMessagesLocal, setChatMessagesLocal] = useState(chatMessages);
+  const [newChatMessage, setNewChatMessage] = useState('');
+  const [sleepTimerActive, setSleepTimerActive] = useState(false);
+  const [sleepTimerCountdown, setSleepTimerCountdown] = useState<number | null>(null);
+
+  const {
+    currentStation,
+    isPlaying,
+    volume,
+    isMuted,
+    favorites,
+    history,
+    activeTab,
+    setCurrentStation,
+    setIsPlaying,
+    setVolume,
+    toggleMute,
+    addToFavorites,
+    removeFromFavorites,
+    isFavorite,
+    setActiveTab,
+  } = useRadioStore();
+
+  const location = useGeolocation();
+  const { audioRef, getAnalyserData } = useAudioPlayer();
+
+  // Cargar emisoras top al inicio
+  useEffect(() => {
+    loadTopStations();
+  }, []);
+
+  // Sleep timer
+  useEffect(() => {
+    if (!sleepTimerActive || sleepTimerCountdown === null) return;
+
+    const timer = setInterval(() => {
+      setSleepTimerCountdown((prev) => {
+        if (prev === null || prev <= 0) {
+          setIsPlaying(false);
+          setSleepTimerActive(false);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 60000); // Cada minuto
+
+    return () => clearInterval(timer);
+  }, [sleepTimerActive, sleepTimerCountdown]);
+
+  const loadTopStations = async () => {
+    setLoading(true);
+    const topStations = await getTopStations(50);
+    setStations(topStations);
+    setLoading(false);
+  };
+
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      loadTopStations();
+      return;
+    }
+    setLoading(true);
+    const results = await searchStationsByName(query, 50);
+    setStations(results);
+    setLoading(false);
+  };
+
+  const handleGenreSelect = async (genre: string) => {
+    setSelectedGenre(genre);
+    setSelectedCountry(null);
+    setLoading(true);
+    const results = await getStationsByTag(genre, 50);
+    setStations(results);
+    setLoading(false);
+  };
+
+  const handleCountrySelect = async (countryCode: string) => {
+    setSelectedCountry(countryCode);
+    setSelectedGenre(null);
+    setLoading(true);
+    const results = await getStationsByCountry(countryCode, 50);
+    setStations(results);
+    setLoading(false);
+  };
+
+  const handleStationClick = (station: Station) => {
+    if (currentStation?.stationuuid === station.stationuuid) {
+      setIsPlaying(!isPlaying);
+    } else {
+      setCurrentStation(station);
+      setIsPlaying(true);
+    }
+  };
+
+  const handleSendChatMessage = () => {
+    if (!newChatMessage.trim()) return;
+    const newMsg = {
+      id: Date.now().toString(),
+      user: 'Tú',
+      message: newChatMessage,
+      city: location.city,
+      time: new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' }),
+      avatar: '🎧',
+    };
+    setChatMessagesLocal([...chatMessagesLocal, newMsg]);
+    setNewChatMessage('');
+  };
+
+  const handleSleepTimer = (minutes: number) => {
+    setSleepTimerCountdown(minutes);
+    setSleepTimerActive(true);
+  };
+
+  const getLocalAds = () => {
+    return localAds.filter((ad) => ad.city === location.city).slice(0, 3);
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+      <audio ref={audioRef} crossOrigin="anonymous" />
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-gray-800">
+      <header className="sticky top-0 z-50 bg-black/40 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                <Github className="w-5 h-5 text-white" />
+            <motion.div
+              className="flex items-center gap-3"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
+                <Radio className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">DevOps Dashboard</h1>
-                <p className="text-xs text-gray-400">GitHub + Vercel Integration</p>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                  Onda Global
+                </h1>
+                <p className="text-xs text-gray-400">Cadena Radiofónica Geolocal</p>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-xs text-green-400">Sistema operativo</span>
-              </div>
+            </motion.div>
+
+            <div className="flex items-center gap-3">
+              {location.loading ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-400" />
+                  <span className="text-xs text-gray-400">Detectando...</span>
+                </div>
+              ) : (
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                  <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="text-xs text-gray-300">{location.city}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {[
-            { label: "Total Stars", value: stats.totalStars.toLocaleString(), icon: Star, color: "text-yellow-400" },
-            { label: "Deployments", value: stats.totalDeployments.toLocaleString(), icon: Zap, color: "text-purple-400" },
-            { label: "Success Rate", value: `${stats.successRate}%`, icon: CheckCircle2, color: "text-green-400" },
-            { label: "Avg Build Time", value: stats.avgBuildTime, icon: Clock, color: "text-blue-400" },
-          ].map((stat, idx) => (
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Columna Principal */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Reproductor Principal */}
             <motion.div
-              key={idx}
-              className="rounded-xl bg-gray-900/50 border border-gray-800 p-4"
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/10 p-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
             >
-              <div className="flex items-center justify-between mb-2">
-                <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                <TrendingUp className="w-3 h-3 text-gray-600" />
-              </div>
-              <p className="text-2xl font-bold text-white">{stat.value}</p>
-              <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
+              {currentStation && (
+                <>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className="w-16 h-16 rounded-xl flex items-center justify-center text-3xl"
+                        style={{ backgroundColor: `${getGenreColor(currentStation.tags)}20` }}
+                      >
+                        {getGenreEmoji(currentStation.tags)}
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-white">{currentStation.name}</h2>
+                        <p className="text-sm text-gray-400">
+                          {currentStation.country} • {currentStation.tags.split(',')[0]}
+                        </p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <Headphones className="w-3 h-3" />
+                            {formatListeners(currentStation.clickcount)} oyentes
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <Star className="w-3 h-3" />
+                            {currentStation.votes} votos
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (isFavorite(currentStation.stationuuid)) {
+                          removeFromFavorites(currentStation.stationuuid);
+                        } else {
+                          addToFavorites(currentStation);
+                        }
+                      }}
+                      className={`p-2 rounded-full transition-all ${
+                        isFavorite(currentStation.stationuuid)
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-white/5 text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      <Heart className={`w-5 h-5 ${isFavorite(currentStation.stationuuid) ? 'fill-current' : ''}`} />
+                    </button>
+                  </div>
+
+                  <AudioVisualizer
+                    getAnalyserData={getAnalyserData}
+                    isPlaying={isPlaying}
+                    color={getGenreColor(currentStation.tags)}
+                  />
+
+                  <div className="flex items-center justify-center gap-4 mt-6">
+                    <button
+                      onClick={() => {
+                        const idx = stations.findIndex((s) => s.stationuuid === currentStation.stationuuid);
+                        const prev = stations[(idx - 1 + stations.length) % stations.length];
+                        if (prev) handleStationClick(prev);
+                      }}
+                      className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition-all"
+                    >
+                      <SkipBack className="w-5 h-5" />
+                    </button>
+                    <motion.button
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      className="p-5 rounded-full bg-gradient-to-br from-orange-500 to-pink-600 shadow-lg shadow-orange-500/30"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
+                    </motion.button>
+                    <button
+                      onClick={() => {
+                        const idx = stations.findIndex((s) => s.stationuuid === currentStation.stationuuid);
+                        const next = stations[(idx + 1) % stations.length];
+                        if (next) handleStationClick(next);
+                      }}
+                      className="p-3 rounded-full bg-white/5 hover:bg-white/10 transition-all"
+                    >
+                      <SkipForward className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3 mt-6">
+                    <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors">
+                      {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                    </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => setVolume(Number(e.target.value))}
+                      className="flex-1 h-2 rounded-full appearance-none bg-white/10 cursor-pointer"
+                      style={{ accentColor: getGenreColor(currentStation.tags) }}
+                    />
+                    <span className="text-xs text-gray-400 w-10 text-right">{isMuted ? 0 : volume}%</span>
+                  </div>
+                </>
+              )}
             </motion.div>
-          ))}
-        </div>
 
-        {/* Contribution Graph */}
-        <div className="mb-6">
-          <ContributionGraph />
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-800">
-          {[
-            { id: "repos" as const, label: "Repositorios", icon: Package, count: repositories.length },
-            { id: "deployments" as const, label: "Deployments", icon: Zap, count: deployments.length },
-            { id: "pipelines" as const, label: "Pipelines", icon: PlayCircle, count: pipelines.length },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 ${
-                activeTab === tab.id
-                  ? "text-white border-white"
-                  : "text-gray-400 border-transparent hover:text-gray-300"
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">
-                {tab.count}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            {activeTab === "repos" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {repositories.map((repo) => (
-                  <RepoCard key={repo.id} repo={repo} />
-                ))}
+            {/* Búsqueda y Filtros */}
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    handleSearch(e.target.value);
+                  }}
+                  placeholder="Buscar emisoras por nombre..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50"
+                />
               </div>
-            )}
 
-            {activeTab === "deployments" && (
-              <div className="space-y-4">
-                {deployments.map((deployment) => (
-                  <DeploymentCard key={deployment.id} deployment={deployment} />
-                ))}
-              </div>
-            )}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-sm"
+              >
+                <Filter className="w-4 h-4" />
+                Filtros
+                <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              </button>
 
-            {activeTab === "pipelines" && (
-              <div className="space-y-4">
-                {pipelines.map((pipeline) => (
-                  <PipelineCard key={pipeline.id} pipeline={pipeline} />
-                ))}
+              <AnimatePresence>
+                {showFilters && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-4 overflow-hidden"
+                  >
+                    {/* Géneros */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-300 mb-3">Géneros</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {genres.map((genre) => (
+                          <button
+                            key={genre.id}
+                            onClick={() => handleGenreSelect(genre.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                              selectedGenre === genre.id
+                                ? 'bg-orange-500 text-white'
+                                : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                            }`}
+                          >
+                            {genre.emoji} {genre.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Países */}
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-300 mb-3">Países</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {popularCountries.map((country) => (
+                          <button
+                            key={country.code}
+                            onClick={() => handleCountrySelect(country.code)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                              selectedCountry === country.code
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                            }`}
+                          >
+                            {country.emoji} {country.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Lista de Emisoras */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">
+                  {selectedGenre
+                    ? `Emisoras de ${genres.find((g) => g.id === selectedGenre)?.name}`
+                    : selectedCountry
+                    ? `Emisoras de ${popularCountries.find((c) => c.code === selectedCountry)?.name}`
+                    : 'Top Emisoras'}
+                </h2>
+                <button
+                  onClick={loadTopStations}
+                  className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
               </div>
-            )}
+
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="w-8 h-8 animate-spin text-orange-400" />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {stations.map((station) => (
+                    <motion.button
+                      key={station.stationuuid}
+                      onClick={() => handleStationClick(station)}
+                      className={`w-full text-left p-4 rounded-xl transition-all ${
+                        currentStation?.stationuuid === station.stationuuid
+                          ? 'bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30'
+                          : 'bg-white/5 hover:bg-white/10 border border-white/5'
+                      }`}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl flex-shrink-0"
+                          style={{ backgroundColor: `${getGenreColor(station.tags)}20` }}
+                        >
+                          {getGenreEmoji(station.tags)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-white truncate">{station.name}</h3>
+                          <p className="text-xs text-gray-400 truncate">
+                            {station.country} • {station.tags.split(',')[0]}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-[10px] text-gray-500">
+                              {formatListeners(station.clickcount)} oyentes
+                            </span>
+                            <span className="text-[10px] text-gray-500">
+                              {station.bitrate} kbps
+                            </span>
+                          </div>
+                        </div>
+                        {currentStation?.stationuuid === station.stationuuid && isPlaying && (
+                          <motion.div
+                            className="flex items-center gap-0.5"
+                            animate={{ opacity: [1, 0.5, 1] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                          >
+                            <div className="w-1 h-4 bg-orange-400 rounded-full" />
+                            <div className="w-1 h-3 bg-orange-400 rounded-full" />
+                            <div className="w-1 h-5 bg-orange-400 rounded-full" />
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Sidebar - Activity */}
-          <div className="lg:col-span-1">
-            <div className="rounded-xl bg-gray-900/50 border border-gray-800 p-5 sticky top-24">
-              <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-blue-400" />
-                Actividad Reciente
-              </h3>
-              <div className="space-y-1">
-                {activities.slice(0, 6).map((activity) => (
-                  <ActivityItem key={activity.id} activity={activity} />
+          {/* Columna Lateral */}
+          <div className="space-y-6">
+            {/* Chat en Vivo */}
+            <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <MessageCircle className="w-5 h-5 text-blue-400" />
+                <h3 className="text-sm font-bold text-white">Chat en Vivo</h3>
+                <span className="ml-auto flex items-center gap-1 text-xs text-green-400">
+                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  {chatMessagesLocal.length + 42} online
+                </span>
+              </div>
+              <div className="h-64 overflow-y-auto space-y-3 mb-3">
+                {chatMessagesLocal.map((msg) => (
+                  <div key={msg.id} className="flex items-start gap-2">
+                    <span className="text-lg flex-shrink-0">{msg.avatar}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-blue-400">{msg.user}</span>
+                        <span className="text-[10px] text-gray-500">{msg.time}</span>
+                      </div>
+                      <p className="text-xs text-gray-300 break-words">{msg.message}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newChatMessage}
+                  onChange={(e) => setNewChatMessage(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage()}
+                  placeholder="Escribe un mensaje..."
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                />
+                <button
+                  onClick={handleSendChatMessage}
+                  className="p-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Publicidad Local */}
+            <div className="rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/10 backdrop-blur-xl border border-amber-500/20 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-5 h-5 text-amber-400" />
+                <h3 className="text-sm font-bold text-white">Publicidad Local</h3>
+                <span className="ml-auto text-[10px] text-gray-400">{location.city}</span>
+              </div>
+              <div className="space-y-3">
+                {getLocalAds().map((ad) => (
+                  <div key={ad.id} className="p-3 rounded-lg bg-white/5 border border-white/5">
+                    <div className="flex items-start gap-2">
+                      <span className="text-2xl">{ad.emoji}</span>
+                      <div className="flex-1">
+                        <h4 className="text-xs font-bold text-amber-300">{ad.business}</h4>
+                        <p className="text-[11px] text-gray-400 mt-1">{ad.text}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-[10px] text-gray-500">{ad.radius}km radio</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400">
+                            {ad.offer}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Programación */}
+            <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="w-5 h-5 text-purple-400" />
+                <h3 className="text-sm font-bold text-white">Programación</h3>
+              </div>
+              <div className="space-y-2">
+                {scheduleItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-lg ${
+                      item.isLive ? 'bg-green-500/10 border border-green-500/20' : 'bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-white">{item.show}</p>
+                        <p className="text-[10px] text-gray-400">{item.host}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-300">{item.time}</p>
+                        {item.isLive && (
+                          <span className="text-[10px] text-green-400 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                            LIVE
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sleep Timer */}
+            <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Timer className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-sm font-bold text-white">Sleep Timer</h3>
+                {sleepTimerActive && sleepTimerCountdown !== null && (
+                  <span className="ml-auto text-xs text-cyan-400">{sleepTimerCountdown} min</span>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {sleepTimerOptions.map((option) => (
+                  <button
+                    key={option.minutes}
+                    onClick={() => handleSleepTimer(option.minutes)}
+                    className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-xs text-gray-300"
+                  >
+                    {option.label}
+                  </button>
                 ))}
               </div>
             </div>
           </div>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-800 mt-12 py-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Github className="w-5 h-5 text-gray-400" />
-              <span className="text-sm text-gray-400">DevOps Dashboard</span>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
-              <span className="flex items-center gap-1">
-                <Shield className="w-3 h-3" />
-                CI/CD Seguro
-              </span>
-              <span>•</span>
-              <span>GitHub Actions</span>
-              <span>•</span>
-              <span>Vercel Deployments</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 }

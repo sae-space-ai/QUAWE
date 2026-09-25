@@ -3,54 +3,81 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    background-color: #000000;
+    background-color: #0f172a;
     color-scheme: dark;
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: #0d1117;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #30363d;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #484f58;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Range input styling */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: currentColor;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: currentColor;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
   }
 
   /* Selection */
   ::selection {
-    background-color: rgba(56, 139, 253, 0.3);
+    background-color: rgba(249, 115, 22, 0.3);
     color: white;
   }
 }
 
 @layer utilities {
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 }
