@@ -36,9 +36,11 @@ import PointsDashboard from './components/PointsDashboard';
 import ProductCatalog from './components/ProductCatalog';
 import UserProfile from './components/UserProfile';
 import AuthModal from './components/AuthModal';
+import PremiumModal from './components/PremiumModal';
 import { earnPointsForListening } from './services/pointsSystem';
 import { startAdScheduler, stopAdScheduler, pauseAdScheduler, resumeAdScheduler } from './services/adScheduler';
 import { getCurrentUser, startListeningSession, stopListeningSession } from './services/authSystem';
+import { isUserPremium } from './services/premiumSystem';
 
 // ============================================
 // Visualizador de Audio
@@ -130,7 +132,9 @@ export default function App() {
   const [showProductCatalog, setShowProductCatalog] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(!!getCurrentUser());
+  const [isPremium, setIsPremium] = useState(false);
 
   const {
     currentStation,
@@ -213,6 +217,7 @@ export default function App() {
     const user = getCurrentUser();
     if (user) {
       startListeningSession(user.id);
+      setIsPremium(isUserPremium(user.id));
     }
 
     // Ganar puntos cada minuto de escucha
@@ -750,22 +755,34 @@ export default function App() {
 
               {/* Toggle Perfil / Login */}
               {isUserLoggedIn ? (
-                <button
-                  onClick={() => {
-                    setShowUserProfile(!showUserProfile);
-                    setShowLocalStations(false);
-                    setShowThematicChannels(false);
-                    setShowPointsDashboard(false);
-                    setShowProductCatalog(false);
-                  }}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                    showUserProfile
-                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
-                      : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
-                  }`}
-                >
-                  👤 Mi Perfil
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      setShowUserProfile(!showUserProfile);
+                      setShowLocalStations(false);
+                      setShowThematicChannels(false);
+                      setShowPointsDashboard(false);
+                      setShowProductCatalog(false);
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                      showUserProfile
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                    }`}
+                  >
+                    👤 Mi Perfil
+                  </button>
+                  <button
+                    onClick={() => setShowPremiumModal(true)}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                      isPremium
+                        ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg shadow-yellow-500/30'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                    }`}
+                  >
+                    {isPremium ? '👑 Premium' : '⭐ Premium'}
+                  </button>
+                </>
               ) : (
                 <button
                   onClick={() => setShowAuthModal(true)}
@@ -1341,6 +1358,16 @@ export default function App() {
         onSuccess={() => {
           setIsUserLoggedIn(true);
           setShowAuthModal(false);
+        }}
+      />
+
+      {/* Modal de Membresía Premium */}
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        onSuccess={() => {
+          setIsPremium(true);
+          setShowPremiumModal(false);
         }}
       />
     </div>

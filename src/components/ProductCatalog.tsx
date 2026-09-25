@@ -177,33 +177,46 @@ export default function ProductCatalog() {
                 )}
               </div>
 
-              {/* Información del producto */}
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-white">{product.name}</h3>
-                  <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-gray-300">
-                    {product.brand}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-400">{product.description}</p>
-                
-                {/* Stock */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">Stock:</span>
-                  <span className={`text-xs font-semibold ${hasStock ? 'text-green-400' : 'text-red-400'}`}>
-                    {hasStock ? `${product.stock} disponibles` : 'Agotado'}
-                  </span>
-                </div>
+                {/* Información del producto */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-white">{product.name}</h3>
+                    <span className="text-xs px-2 py-1 rounded-full bg-white/10 text-gray-300">
+                      {product.brand}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-400">{product.description}</p>
+                  
+                  {/* Stock */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Stock:</span>
+                    <span className={`text-xs font-semibold ${hasStock ? 'text-green-400' : 'text-red-400'}`}>
+                      {hasStock ? `${product.stock} disponibles` : 'Agotado'}
+                    </span>
+                  </div>
 
-                {/* Puntos necesarios */}
-                <div className="flex items-center justify-between pt-2 border-t border-white/10">
-                  <span className="text-sm text-gray-400">Costo:</span>
-                  <span className="text-lg font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
-                    {formatPoints(product.pointsCost)} pts
-                  </span>
-                </div>
-              </div>
+                  {/* Precio real */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Precio real:</span>
+                    <span className="text-sm font-semibold text-gray-300">{product.retailPrice}</span>
+                  </div>
 
+                  {/* Tiempo estimado */}
+                  {product.estimatedTime && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Tiempo estimado:</span>
+                      <span className="text-xs font-semibold text-blue-400">{product.estimatedTime}</span>
+                    </div>
+                  )}
+
+                  {/* Puntos necesarios */}
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    <span className="text-sm text-gray-400">Costo en puntos:</span>
+                    <span className="text-lg font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">
+                      {formatPoints(product.pointsCost)} pts
+                    </span>
+                  </div>
+                </div>
               {/* Botón de canje */}
               <button
                 onClick={() => handleRedeemClick(product)}

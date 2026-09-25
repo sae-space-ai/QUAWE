@@ -30,12 +30,38 @@ export interface RedeemedProduct {
   redeemedAt: number;
 }
 
-// Configuración de puntos
+// Configuración de puntos - SISTEMA EQUILIBRADO
 export const POINTS_CONFIG = {
-  pointsPerMinute: 10, // 10 puntos por minuto de escucha
-  bonusFirstTime: 100, // Bonus por escuchar una emisora por primera vez
-  bonusDaily: 500, // Bonus diario por escuchar al menos 30 minutos
-  bonusStreak: 1000, // Bonus por racha de 7 días consecutivos
+  // Sistema de puntos progresivo (decrece con el tiempo de escucha diario)
+  pointsPerMinute: {
+    first30Min: 1.0,      // Primeros 30 min: 1 punto/minuto
+    next30Min: 0.5,       // 30-60 min: 0.5 puntos/minuto
+    after60Min: 0.25,     // Después de 60 min: 0.25 puntos/minuto
+  },
+  
+  // Bonuses reducidos para evitar inflación
+  bonusFirstTime: 50,     // Bonus por primera emisora (reducido de 100)
+  bonusDaily: 100,        // Bonus diario por 30+ minutos (reducido de 500)
+  bonusStreak: 250,       // Bonus por racha de 7 días (reducido de 1000)
+  
+  // Membresía Premium
+  premiumMonthly: {
+    cost: 5,              // €5/mes
+    pointsBonus: 2000,    // 2,000 puntos extra al mes
+    benefits: [
+      'Sin anuncios',
+      'Calidad de audio HD',
+      'Acceso anticipado a productos',
+      'Multiplicador de puntos x1.5',
+      'Badge premium en perfil'
+    ]
+  },
+  
+  // Límites diarios para evitar abuso
+  dailyLimits: {
+    maxPointsPerDay: 150,  // Máximo 150 puntos por día (sin contar bonuses)
+    maxListeningTime: 480, // Máximo 8 horas de escucha con puntos por día
+  }
 };
 
 const STORAGE_KEY = 'quawe_user_points';
@@ -90,7 +116,18 @@ export function addPoints(points: number, description: string, stationId?: strin
   saveUserPoints(userPoints);
 }
 
-// Función para ganar puntos por escuchar
+// Función para calcular puntos por minuto según el tiempo de escucha diario
+function calculatePointsPerMinute(dailyMinutesListened: number): number {
+  if (dailyMinutesListened <= 30) {
+    return POINTS_CONFIG.pointsPerMinute.first30Min;
+  } else if (dailyMinutesListened <= 60) {
+    return POINTS_CONFIG.pointsPerMinute.next30Min;
+  } else {
+    return POINTS_CONFIG.pointsPerMinute.after60Min;
+  }
+}
+
+// Función para ganar puntos por escuchar - SISTEMA EQUILIBRADO
 export function earnPointsForListening(stationId: string, minutesListened: number): void {
   const userPoints = getUserPoints();
   
@@ -103,20 +140,68 @@ export function earnPointsForListening(stationId: string, minutesListened: numbe
     addPoints(POINTS_CONFIG.bonusFirstTime, `Bonus: Primera vez escuchando emisora`, stationId);
   }
   
-  // Calcular puntos por tiempo de escucha
-  const pointsEarned = minutesListened * POINTS_CONFIG.pointsPerMinute;
-  addPoints(pointsEarned, `Escuchaste ${minutesListened} minutos`, stationId);
-  
-  // Verificar bonus diario (30 minutos)
+  // Calcular minutos escuchados hoy
   const today = new Date().toDateString();
-  const todayTransactions = userPoints.pointsHistory.filter(t => {
+  const todayMinutes = userPoints.pointsHistory
+    .filter(t => {
+      const transDate = new Date(t.timestamp).toDateString();
+      return transDate === today && t.type === 'earn' && t.description.includes('minutos');
+    })
+    .reduce((sum, t) => sum + parseInt(t.description.match(/\d+/)?.[0] || '0'), 0);
+  
+  // Verificar límite diario
+  if (todayMinutes >= POINTS_CONFIG.dailyLimits.maxListeningTime) {
+    console.log('[Points] Límite diario de escucha alcanzado');
+    return;
+  }
+  
+  // Calcular puntos con sistema progresivo
+  let pointsEarned = 0;
+  let remainingMinutes = minutesListened;
+  
+  // Primeros 30 minutos
+  if (todayMinutes < 30) {
+    const minutesInFirstTier = Math.min(remainingMinutes, 30 - todayMinutes);
+    pointsEarned += minutesInFirstTier * POINTS_CONFIG.pointsPerMinute.first30Min;
+    remainingMinutes -= minutesInFirstTier;
+  }
+  
+  // 30-60 minutos
+  if (remainingMinutes > 0 && todayMinutes < 60) {
+    const minutesInSecondTier = Math.min(remainingMinutes, 60 - Math.max(todayMinutes, 30));
+    pointsEarned += minutesInSecondTier * POINTS_CONFIG.pointsPerMinute.next30Min;
+    remainingMinutes -= minutesInSecondTier;
+  }
+  
+  // Después de 60 minutos
+  if (remainingMinutes > 0) {
+    pointsEarned += remainingMinutes * POINTS_CONFIG.pointsPerMinute.after60Min;
+  }
+  
+  // Redondear a entero
+  pointsEarned = Math.floor(pointsEarned);
+  
+  // Verificar límite de puntos diario
+  const todayPoints = userPoints.pointsHistory
+    .filter(t => {
+      const transDate = new Date(t.timestamp).toDateString();
+      return transDate === today && t.type === 'earn';
+    })
+    .reduce((sum, t) => sum + t.points, 0);
+  
+  if (todayPoints + pointsEarned > POINTS_CONFIG.dailyLimits.maxPointsPerDay) {
+    pointsEarned = Math.max(0, POINTS_CONFIG.dailyLimits.maxPointsPerDay - todayPoints);
+  }
+  
+  if (pointsEarned > 0) {
+    addPoints(pointsEarned, `Escuchaste ${minutesListened} minutos`, stationId);
+  }
+  
+  // Bonus diario por 30+ minutos
+  if (todayMinutes + minutesListened >= 30 && !userPoints.pointsHistory.some(t => {
     const transDate = new Date(t.timestamp).toDateString();
-    return transDate === today && t.type === 'earn';
-  });
-  
-  const todayPoints = todayTransactions.reduce((sum, t) => sum + t.points, 0);
-  
-  if (todayPoints >= 300 && !todayTransactions.some(t => t.description.includes('Bonus diario'))) {
+    return transDate === today && t.description.includes('Bonus diario');
+  })) {
     addPoints(POINTS_CONFIG.bonusDaily, 'Bonus diario: 30+ minutos escuchados');
   }
   
