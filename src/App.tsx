@@ -206,6 +206,43 @@ export default function App() {
     return () => clearInterval(pointsInterval);
   }, [isPlaying, currentStation]);
 
+  // Sistema de cuñas publicitarias automáticas cada minuto
+  useEffect(() => {
+    if (!isPlaying || !currentStation) {
+      stopAdScheduler();
+      return;
+    }
+
+    // Determinar si es un canal temático
+    const isThematic = currentStation.stationuuid.startsWith('quawe-') && 
+                       currentStation.stationuuid !== 'quawe-original' &&
+                       !localQuaweStations.some(ls => ls.station.stationuuid === currentStation.stationuuid);
+    
+    const channelId = isThematic ? currentStation.tags.split(',')[1] : null;
+
+    // Iniciar el programador de anuncios
+    startAdScheduler(
+      currentStation.stationuuid,
+      channelId,
+      // Callback cuando inicia un anuncio
+      () => {
+        setIsPlaying(false); // Pausar música
+        setIsAdPlayingState(true); // Mostrar overlay de anuncio
+        setAdCountdown(12);
+      },
+      // Callback cuando termina un anuncio
+      () => {
+        setIsAdPlayingState(false); // Ocultar overlay
+        setAdCountdown(0);
+        setIsPlaying(true); // Reanudar música
+      }
+    );
+
+    return () => {
+      stopAdScheduler();
+    };
+  }, [isPlaying, currentStation]);
+
   // Función para reproducir anuncio local de 12 segundos
   const playStationAd = async (city: string) => {
     if (!hasAdsForCity(city)) {
