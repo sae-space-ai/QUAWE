@@ -22,6 +22,7 @@ import {
 import { genres, localAds, chatMessages, scheduleItems, sleepTimerOptions, popularCountries } from './data/constants';
 import { Station } from './types';
 import PulsarLogo from './components/PulsarLogo';
+import PulsarOriginal from './components/PulsarOriginal';
 
 // ============================================
 // Visualizador de Audio
@@ -102,6 +103,7 @@ export default function App() {
   const [newChatMessage, setNewChatMessage] = useState('');
   const [sleepTimerActive, setSleepTimerActive] = useState(false);
   const [sleepTimerCountdown, setSleepTimerCountdown] = useState<number | null>(null);
+  const [showOriginal, setShowOriginal] = useState(false);
 
   const {
     currentStation,
@@ -229,6 +231,18 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
             >
               <PulsarLogo size={56} animated={true} showText={true} />
+              
+              {/* Toggle PULSAR Original */}
+              <button
+                onClick={() => setShowOriginal(!showOriginal)}
+                className={`ml-4 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  showOriginal
+                    ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow-lg shadow-orange-500/30'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                }`}
+              >
+                {showOriginal ? '🎵 Original' : '📻 Radio'}
+              </button>
             </motion.div>
 
             <div className="flex items-center gap-3">
@@ -249,16 +263,21 @@ export default function App() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Columna Principal */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Reproductor Principal */}
-            <motion.div
-              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/10 p-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              {currentStation && (
+        {showOriginal ? (
+          // PULSAR Original - Canal del Artista
+          <PulsarOriginal />
+        ) : (
+          // Radio Normal - Emisoras
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Columna Principal */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Reproductor Principal */}
+              <motion.div
+                className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/10 p-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                {currentStation && (
                 <>
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-4">
@@ -641,6 +660,7 @@ export default function App() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

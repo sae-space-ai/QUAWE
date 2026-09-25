@@ -122,6 +122,23 @@ npm run preview
 - **Logo**: Estrella pulsar con ondas concéntricas expandiéndose
 - **Tipografía**: Bold, moderna, con gradientes
 
+### 🎵 PULSAR Original - Canal del Artista
+
+**PULSAR FM** cuenta con un canal oficial integrado con **Audius**, la plataforma de streaming de música descentralizada.
+
+**Artista Oficial**: Prof. Manuel Gago
+- **Perfil**: [@profmanuelgago](https://audius.co/profmanuelgago)
+- **Plataforma**: Audius (blockchain-based)
+- **Características**:
+  - ✅ Streaming directo desde Audius
+  - ✅ Perfil completo del artista
+  - ✅ Lista de tracks con estadísticas
+  - ✅ Reproductor integrado
+  - ✅ Links directos a Audius
+  - ✅ Sincronización automática
+
+Ver más detalles en [AUDIUS_INTEGRATION.md](./AUDIUS_INTEGRATION.md)
+
 ## 🎯 Estructura del Proyecto
 
 ```
