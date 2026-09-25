@@ -14,6 +14,8 @@ Un **pulsar** es una estrella de neutrones que gira rápidamente y emite haces d
 - **Control de volumen** independiente por emisora
 - **Play/Pause/Skip** con transiciones suaves
 - **Mini player** persistente en la parte inferior
+- **✅ CORREGIDO**: Todas las emisoras PULSAR reproducen música de Audius correctamente
+- **Auto-play** del primer track al seleccionar emisora
 
 ### 🌍 Geolocalización Inteligente
 - **Detección automática** de ubicación del usuario
@@ -65,6 +67,25 @@ Un **pulsar** es una estrella de neutrones que gira rápidamente y emite haces d
 - **Radio de cobertura** configurable (km)
 - **Categorías**: Gastronomía, Salud, Servicios, Ocio, Cultura
 - **Ofertas destacadas** con emojis visuales
+
+## ✅ Ecosistema Corregido (v2.1.0)
+
+### 🐛 Problema Resuelto
+Las emisoras PULSAR no reproducían la música de Audius correctamente debido a un conflicto entre dos sistemas de reproducción.
+
+### 🔧 Solución Implementada
+- **Limpieza de estado**: Al seleccionar una emisora PULSAR, se detiene el reproductor principal y se limpia `currentStation`
+- **Auto-play**: El primer track de Audius se reproduce automáticamente al cargar el componente
+- **Control único**: Solo el componente `PulsarOriginal` controla la reproducción cuando está activo
+- **Transiciones limpias**: Al cambiar entre vistas, el estado se limpia correctamente
+
+### 🎯 Resultado
+- ✅ Todas las 11 emisoras PULSAR reproducen música de Audius
+- ✅ Auto-play inmediato al seleccionar emisora
+- ✅ Sin conflictos entre reproductores
+- ✅ Transiciones suaves entre vistas
+
+📖 Ver detalles completos en [CORRECCION_ECOSISTEMA.md](./CORRECCION_ECOSISTEMA.md)
 
 ## 🛠️ Tecnologías Utilizadas
 

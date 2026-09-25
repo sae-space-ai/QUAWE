@@ -240,21 +240,21 @@ export default function App() {
   };
 
   const handleStationClick = (station: Station) => {
-    // Si es PULSAR Original, mostrar el componente especial
-    if (station.stationuuid === 'pulsar-original') {
+    // Si es PULSAR Original o cualquier emisora local PULSAR
+    if (station.stationuuid === 'pulsar-original' || 
+        (station.stationuuid.startsWith('pulsar-') && station.stationuuid !== 'pulsar-original')) {
+      
+      // Detener el reproductor principal
+      setIsPlaying(false);
+      setCurrentStation(null);
+      
+      // Mostrar el componente PULSAR Original
       setShowOriginal(true);
       setShowLocalStations(false);
       return;
     }
     
-    // Si es una estación local PULSAR, mostrar el componente Original
-    if (station.stationuuid.startsWith('pulsar-') && station.stationuuid !== 'pulsar-original') {
-      setShowOriginal(true);
-      setShowLocalStations(false);
-      return;
-    }
-    
-    // Si ya estamos en PULSAR Original y se hace clic en otra estación, salir
+    // Si es una emisora normal (no debería haber, pero por si acaso)
     if (showOriginal) {
       setShowOriginal(false);
     }
@@ -317,8 +317,15 @@ export default function App() {
               {/* Toggle PULSAR Original */}
               <button
                 onClick={() => {
-                  setShowOriginal(!showOriginal);
+                  const newShowOriginal = !showOriginal;
+                  setShowOriginal(newShowOriginal);
                   setShowLocalStations(false);
+                  
+                  // Si salimos del modo Original, limpiar el reproductor
+                  if (!newShowOriginal) {
+                    setIsPlaying(false);
+                    setCurrentStation(null);
+                  }
                 }}
                 className={`ml-4 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showOriginal

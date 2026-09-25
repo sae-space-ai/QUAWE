@@ -38,6 +38,11 @@ export default function PulsarOriginal() {
       
       setUser(userData);
       setTracks(tracksData);
+      
+      // Auto-reproducir el primer track si hay tracks disponibles
+      if (tracksData.length > 0) {
+        handlePlayTrack(tracksData[0]);
+      }
     } catch (error) {
       console.error('Error loading artist data:', error);
     } finally {
