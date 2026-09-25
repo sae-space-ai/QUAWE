@@ -160,9 +160,21 @@ export default function ProductCatalog() {
               transition={{ delay: index * 0.05 }}
               whileHover={{ scale: 1.02 }}
             >
-              {/* Emoji del producto */}
-              <div className="text-6xl text-center mb-4">
-                {product.image}
+              {/* Imagen del producto */}
+              <div className="w-full h-48 mb-4 rounded-xl overflow-hidden bg-white/5 flex items-center justify-center">
+                {product.image.startsWith('http') ? (
+                  <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.parentElement!.innerHTML = `<div class="text-6xl">${product.image}</div>`;
+                    }}
+                  />
+                ) : (
+                  <div className="text-6xl">{product.image}</div>
+                )}
               </div>
 
               {/* Información del producto */}

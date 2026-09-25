@@ -34,8 +34,11 @@ import { playLocalAd, stopLocalAd, isAdPlaying } from './services/adPlayer';
 import { Megaphone } from 'lucide-react';
 import PointsDashboard from './components/PointsDashboard';
 import ProductCatalog from './components/ProductCatalog';
+import UserProfile from './components/UserProfile';
+import AuthModal from './components/AuthModal';
 import { earnPointsForListening } from './services/pointsSystem';
 import { startAdScheduler, stopAdScheduler, pauseAdScheduler, resumeAdScheduler } from './services/adScheduler';
+import { getCurrentUser, startListeningSession, stopListeningSession } from './services/authSystem';
 
 // ============================================
 // Visualizador de Audio
@@ -125,6 +128,9 @@ export default function App() {
   const [adCountdown, setAdCountdown] = useState(0);
   const [showPointsDashboard, setShowPointsDashboard] = useState(false);
   const [showProductCatalog, setShowProductCatalog] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(!!getCurrentUser());
 
   const {
     currentStation,
@@ -194,7 +200,20 @@ export default function App() {
 
   // Sistema de puntos: ganar puntos por escuchar música
   useEffect(() => {
-    if (!isPlaying || !currentStation) return;
+    if (!isPlaying || !currentStation) {
+      // Si el usuario está logueado, detener sesión de escucha
+      const user = getCurrentUser();
+      if (user) {
+        stopListeningSession(user.id);
+      }
+      return;
+    }
+
+    // Si el usuario está logueado, iniciar sesión de escucha
+    const user = getCurrentUser();
+    if (user) {
+      startListeningSession(user.id);
+    }
 
     // Ganar puntos cada minuto de escucha
     const pointsInterval = setInterval(() => {
@@ -203,7 +222,14 @@ export default function App() {
       }
     }, 60000); // Cada minuto
 
-    return () => clearInterval(pointsInterval);
+    return () => {
+      clearInterval(pointsInterval);
+      // Detener sesión de escucha al desmontar
+      const user = getCurrentUser();
+      if (user) {
+        stopListeningSession(user.id);
+      }
+    };
   }, [isPlaying, currentStation]);
 
   // Sistema de cuñas publicitarias automáticas cada minuto
@@ -657,6 +683,7 @@ export default function App() {
                   setShowThematicChannels(false);
                   setShowPointsDashboard(false);
                   setShowProductCatalog(false);
+                  setShowUserProfile(false);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showLocalStations
@@ -674,6 +701,7 @@ export default function App() {
                   setShowLocalStations(false);
                   setShowPointsDashboard(false);
                   setShowProductCatalog(false);
+                  setShowUserProfile(false);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showThematicChannels
@@ -691,6 +719,7 @@ export default function App() {
                   setShowLocalStations(false);
                   setShowThematicChannels(false);
                   setShowProductCatalog(false);
+                  setShowUserProfile(false);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showPointsDashboard
@@ -708,6 +737,7 @@ export default function App() {
                   setShowLocalStations(false);
                   setShowThematicChannels(false);
                   setShowPointsDashboard(false);
+                  setShowUserProfile(false);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showProductCatalog
@@ -717,6 +747,33 @@ export default function App() {
               >
                 🎁 Catálogo
               </button>
+
+              {/* Toggle Perfil / Login */}
+              {isUserLoggedIn ? (
+                <button
+                  onClick={() => {
+                    setShowUserProfile(!showUserProfile);
+                    setShowLocalStations(false);
+                    setShowThematicChannels(false);
+                    setShowPointsDashboard(false);
+                    setShowProductCatalog(false);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    showUserProfile
+                      ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/30'
+                      : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  👤 Mi Perfil
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all bg-gradient-to-r from-green-500 to-teal-600 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/50"
+                >
+                  🔐 Registrarse
+                </button>
+              )}
             </motion.div>
 
             <div className="flex items-center gap-3">
@@ -737,7 +794,13 @@ export default function App() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {showPointsDashboard ? (
+        {showUserProfile ? (
+          // Perfil de Usuario
+          <UserProfile onLogout={() => {
+            setShowUserProfile(false);
+            setIsUserLoggedIn(false);
+          }} />
+        ) : showPointsDashboard ? (
           // Dashboard de Puntos
           <PointsDashboard />
         ) : showProductCatalog ? (
@@ -1270,6 +1333,16 @@ export default function App() {
         </div>
         )}
       </div>
+
+      {/* Modal de Autenticación */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setIsUserLoggedIn(true);
+          setShowAuthModal(false);
+        }}
+      />
     </div>
   );
 }
