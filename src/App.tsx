@@ -21,6 +21,7 @@ import PulsarLogo from './components/PulsarLogo';
 import PulsarOriginal from './components/PulsarOriginal';
 import LocalStationsGrid from './components/LocalStationsGrid';
 import { localPulsarStations, getLocalStation, LocalPulsarStation } from './data/localStations';
+import { getUserTracks, getTrackStreamUrl } from './services/audiusApi';
 
 // ============================================
 // Visualizador de Audio
@@ -101,7 +102,6 @@ export default function App() {
   const [newChatMessage, setNewChatMessage] = useState('');
   const [sleepTimerActive, setSleepTimerActive] = useState(false);
   const [sleepTimerCountdown, setSleepTimerCountdown] = useState<number | null>(null);
-  const [showOriginal, setShowOriginal] = useState(false);
   const [showLocalStations, setShowLocalStations] = useState(false);
 
   const {
@@ -169,6 +169,22 @@ export default function App() {
 
     return () => clearInterval(timer);
   }, [sleepTimerActive, sleepTimerCountdown]);
+
+  // Función para obtener URL de streaming de Audius
+  const getAudiusStreamUrl = async (): Promise<string | null> => {
+    try {
+      const tracks = await getUserTracks('profmanuelgago', 10);
+      if (tracks.length === 0) return null;
+      
+      // Seleccionar un track aleatorio
+      const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+      const streamUrl = await getTrackStreamUrl(randomTrack.id);
+      return streamUrl;
+    } catch (error) {
+      console.error('Error getting Audius stream:', error);
+      return null;
+    }
+  };
 
   // Cargar solo las emisoras PULSAR propias
   const loadPulsarStations = () => {
@@ -239,25 +255,36 @@ export default function App() {
     setLoading(false);
   };
 
-  const handleStationClick = (station: Station) => {
+  const handleStationClick = async (station: Station) => {
     // Si es PULSAR Original o cualquier emisora local PULSAR
     if (station.stationuuid === 'pulsar-original' || 
         (station.stationuuid.startsWith('pulsar-') && station.stationuuid !== 'pulsar-original')) {
       
-      // Detener el reproductor principal
-      setIsPlaying(false);
-      setCurrentStation(null);
-      
-      // Mostrar el componente PULSAR Original
-      setShowOriginal(true);
+      // Ocultar vista de red local
       setShowLocalStations(false);
+      
+      // Obtener URL de streaming de Audius
+      const streamUrl = await getAudiusStreamUrl();
+      
+      if (streamUrl) {
+        // Crear una copia de la estación con la URL de streaming
+        const stationWithStream: Station = {
+          ...station,
+          url: streamUrl,
+          url_resolved: streamUrl,
+        };
+        
+        // Establecer como estación actual y reproducir
+        setCurrentStation(stationWithStream);
+        setIsPlaying(true);
+      } else {
+        console.error('No se pudo obtener la URL de streaming de Audius');
+      }
+      
       return;
     }
     
-    // Si es una emisora normal (no debería haber, pero por si acaso)
-    if (showOriginal) {
-      setShowOriginal(false);
-    }
+    // Si es una emisora normal
     if (showLocalStations) {
       setShowLocalStations(false);
     }
@@ -270,10 +297,27 @@ export default function App() {
     }
   };
 
-  const handleLocalStationClick = (localStation: LocalPulsarStation) => {
-    // Al hacer clic en una estación local, mostrar PULSAR Original
-    setShowOriginal(true);
+  const handleLocalStationClick = async (localStation: LocalPulsarStation) => {
+    // Al hacer clic en una estación local, reproducir música de Audius
     setShowLocalStations(false);
+    
+    // Obtener URL de streaming de Audius
+    const streamUrl = await getAudiusStreamUrl();
+    
+    if (streamUrl) {
+      // Crear una copia de la estación con la URL de streaming
+      const stationWithStream: Station = {
+        ...localStation.station,
+        url: streamUrl,
+        url_resolved: streamUrl,
+      };
+      
+      // Establecer como estación actual y reproducir
+      setCurrentStation(stationWithStream);
+      setIsPlaying(true);
+    } else {
+      console.error('No se pudo obtener la URL de streaming de Audius');
+    }
   };
 
   const handleSendChatMessage = () => {
@@ -313,34 +357,11 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
             >
               <PulsarLogo size={56} animated={true} showText={true} />
-              
-              {/* Toggle PULSAR Original */}
-              <button
-                onClick={() => {
-                  const newShowOriginal = !showOriginal;
-                  setShowOriginal(newShowOriginal);
-                  setShowLocalStations(false);
-                  
-                  // Si salimos del modo Original, limpiar el reproductor
-                  if (!newShowOriginal) {
-                    setIsPlaying(false);
-                    setCurrentStation(null);
-                  }
-                }}
-                className={`ml-4 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                  showOriginal
-                    ? 'bg-gradient-to-r from-orange-500 to-pink-600 text-white shadow-lg shadow-orange-500/30'
-                    : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
-                }`}
-              >
-                {showOriginal ? '🎵 Original' : '📻 Radio'}
-              </button>
 
               {/* Toggle Red Local */}
               <button
                 onClick={() => {
                   setShowLocalStations(!showLocalStations);
-                  setShowOriginal(false);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showLocalStations
@@ -370,10 +391,7 @@ export default function App() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {showOriginal ? (
-          // PULSAR Original - Canal del Artista
-          <PulsarOriginal />
-        ) : showLocalStations ? (
+        {showLocalStations ? (
           // Red PULSAR Local - 10 ciudades geolocalizadas
           <LocalStationsGrid
             stations={localPulsarStations}
