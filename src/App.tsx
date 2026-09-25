@@ -32,6 +32,9 @@ import { getChannelContent, ChannelContent } from './data/channelContent';
 import ChannelContentDisplay from './components/ChannelContentDisplay';
 import { playLocalAd, stopLocalAd, isAdPlaying } from './services/adPlayer';
 import { Megaphone } from 'lucide-react';
+import PointsDashboard from './components/PointsDashboard';
+import ProductCatalog from './components/ProductCatalog';
+import { earnPointsForListening } from './services/pointsSystem';
 
 // ============================================
 // Visualizador de Audio
@@ -119,6 +122,8 @@ export default function App() {
   const [currentAd, setCurrentAd] = useState<LocalAd | ThematicAd | null>(null);
   const [isAdPlayingState, setIsAdPlayingState] = useState(false);
   const [adCountdown, setAdCountdown] = useState(0);
+  const [showPointsDashboard, setShowPointsDashboard] = useState(false);
+  const [showProductCatalog, setShowProductCatalog] = useState(false);
 
   const {
     currentStation,
@@ -185,6 +190,20 @@ export default function App() {
 
     return () => clearInterval(timer);
   }, [sleepTimerActive, sleepTimerCountdown]);
+
+  // Sistema de puntos: ganar puntos por escuchar música
+  useEffect(() => {
+    if (!isPlaying || !currentStation) return;
+
+    // Ganar puntos cada minuto de escucha
+    const pointsInterval = setInterval(() => {
+      if (currentStation) {
+        earnPointsForListening(currentStation.stationuuid, 1);
+      }
+    }, 60000); // Cada minuto
+
+    return () => clearInterval(pointsInterval);
+  }, [isPlaying, currentStation]);
 
   // Función para reproducir anuncio local de 12 segundos
   const playStationAd = async (city: string) => {
@@ -598,6 +617,8 @@ export default function App() {
                 onClick={() => {
                   setShowLocalStations(!showLocalStations);
                   setShowThematicChannels(false);
+                  setShowPointsDashboard(false);
+                  setShowProductCatalog(false);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showLocalStations
@@ -613,6 +634,8 @@ export default function App() {
                 onClick={() => {
                   setShowThematicChannels(!showThematicChannels);
                   setShowLocalStations(false);
+                  setShowPointsDashboard(false);
+                  setShowProductCatalog(false);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                   showThematicChannels
@@ -621,6 +644,40 @@ export default function App() {
                 }`}
               >
                 🎵 Temáticos
+              </button>
+
+              {/* Toggle Mis Puntos */}
+              <button
+                onClick={() => {
+                  setShowPointsDashboard(!showPointsDashboard);
+                  setShowLocalStations(false);
+                  setShowThematicChannels(false);
+                  setShowProductCatalog(false);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  showPointsDashboard
+                    ? 'bg-gradient-to-r from-green-500 to-teal-600 text-white shadow-lg shadow-green-500/30'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                }`}
+              >
+                💰 Mis Puntos
+              </button>
+
+              {/* Toggle Catálogo */}
+              <button
+                onClick={() => {
+                  setShowProductCatalog(!showProductCatalog);
+                  setShowLocalStations(false);
+                  setShowThematicChannels(false);
+                  setShowPointsDashboard(false);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  showProductCatalog
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg shadow-yellow-500/30'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10'
+                }`}
+              >
+                🎁 Catálogo
               </button>
             </motion.div>
 
@@ -642,7 +699,13 @@ export default function App() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {showThematicChannels ? (
+        {showPointsDashboard ? (
+          // Dashboard de Puntos
+          <PointsDashboard />
+        ) : showProductCatalog ? (
+          // Catálogo de Productos
+          <ProductCatalog />
+        ) : showThematicChannels ? (
           // Canales Temáticos
           <div className="space-y-6">
             <ThematicChannels
