@@ -1,5 +1,5 @@
-// Sistema de Autenticación OAuth Simulado
-// Permite registro con cuentas sociales de forma demostrativa
+// Sistema de Autenticación OAuth 100% SIMULADO
+// NO hace llamadas reales a APIs externas - Todo es simulación local
 
 import { User } from './authSystem';
 
@@ -10,7 +10,7 @@ export interface OAuthProvider {
   color: string;
 }
 
-// Proveedores OAuth disponibles
+// Proveedores OAuth disponibles (solo para UI)
 export const oauthProviders: OAuthProvider[] = [
   {
     id: 'google',
@@ -44,52 +44,55 @@ export const oauthProviders: OAuthProvider[] = [
   }
 ];
 
-// Simular autenticación OAuth
+// Simular autenticación OAuth - 100% LOCAL, sin llamadas externas
 export function simulateOAuthLogin(providerId: string): { success: boolean; user?: User; message: string } {
   const provider = oauthProviders.find(p => p.id === providerId);
   if (!provider) {
     return { success: false, message: 'Proveedor no válido' };
   }
 
-  // Simular datos del usuario del proveedor OAuth
-  const mockUsers: Record<string, Partial<User>> = {
+  // Generar datos simulados del usuario
+  const randomId = Math.random().toString(36).substr(2, 9);
+  const timestamp = Date.now();
+  
+  const mockData: Record<string, { email: string; fullName: string; username: string }> = {
     google: {
-      email: `usuario.${Date.now()}@gmail.com`,
+      email: `usuario.google.${randomId}@gmail.com`,
       fullName: 'Usuario Google',
-      oauthAvatar: 'https://ui-avatars.com/api/?name=Google+User&background=4285F4&color=fff'
+      username: `google_user_${randomId}`
     },
     facebook: {
-      email: `usuario.${Date.now()}@facebook.com`,
+      email: `usuario.facebook.${randomId}@facebook.com`,
       fullName: 'Usuario Facebook',
-      oauthAvatar: 'https://ui-avatars.com/api/?name=Facebook+User&background=1877F2&color=fff'
+      username: `facebook_user_${randomId}`
     },
     twitter: {
-      email: `usuario.${Date.now()}@twitter.com`,
+      email: `usuario.x.${randomId}@twitter.com`,
       fullName: 'Usuario X',
-      oauthAvatar: 'https://ui-avatars.com/api/?name=X+User&background=000000&color=fff'
+      username: `twitter_user_${randomId}`
     },
     github: {
-      email: `usuario.${Date.now()}@github.com`,
+      email: `usuario.github.${randomId}@github.com`,
       fullName: 'Usuario GitHub',
-      oauthAvatar: 'https://ui-avatars.com/api/?name=GitHub+User&background=24292E&color=fff'
+      username: `github_user_${randomId}`
     },
     apple: {
-      email: `usuario.${Date.now()}@icloud.com`,
+      email: `usuario.apple.${randomId}@icloud.com`,
       fullName: 'Usuario Apple',
-      oauthAvatar: 'https://ui-avatars.com/api/?name=Apple+User&background=000000&color=fff'
+      username: `apple_user_${randomId}`
     }
   };
 
-  const mockData = mockUsers[providerId];
+  const data = mockData[providerId];
   
   // Crear usuario simulado
   const newUser: User = {
-    id: `user_oauth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    email: mockData.email || `user@${providerId}.com`,
-    username: `${providerId}_user_${Date.now()}`,
-    fullName: mockData.fullName || `Usuario ${provider.name}`,
-    registrationDate: Date.now(),
-    lastLogin: Date.now(),
+    id: `user_oauth_${timestamp}_${randomId}`,
+    email: data.email,
+    username: data.username,
+    fullName: data.fullName,
+    registrationDate: timestamp,
+    lastLogin: timestamp,
     isVerified: true, // OAuth users are auto-verified
     points: 500, // Bonus de bienvenida
     totalListeningTime: 0,
@@ -98,15 +101,17 @@ export function simulateOAuthLogin(providerId: string): { success: boolean; user
     achievements: ['oauth_signup', 'welcome'],
     redeemedProducts: [],
     oauthProvider: providerId,
-    oauthAvatar: mockData.oauthAvatar,
-    oauthId: `oauth_${providerId}_${Date.now()}`
+    oauthAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.fullName)}&background=${provider.color.replace('#', '')}&color=fff&size=128`,
+    oauthId: `oauth_${providerId}_${timestamp}`
   };
 
-  // Guardar usuario
+  // Guardar usuario en localStorage
   const users = JSON.parse(localStorage.getItem('quawe_users') || '[]');
   users.push(newUser);
   localStorage.setItem('quawe_users', JSON.stringify(users));
   localStorage.setItem('quawe_current_user', newUser.id);
+
+  console.log(`[OAuth] Usuario creado con ${provider.name}:`, newUser.email);
 
   return {
     success: true,
