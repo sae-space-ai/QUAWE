@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { User, Mail, Phone, MapPin, Calendar, Award, LogOut, Link2, Unlink, CheckCircle } from 'lucide-react';
 import { getCurrentUser, logoutUser, getUserStats, formatListeningTime, getLevelName } from '../services/authSystem';
-import { getLinkedOAuthProviders, unlinkOAuthAccount, oauthProviders } from '../services/oauthSystem';
+import { getUserOAuthProvider, oauthProviders } from '../services/oauthSystem';
 
 interface UserProfileProps {
   onClose: () => void;
@@ -11,7 +11,6 @@ interface UserProfileProps {
 export default function UserProfile({ onClose }: UserProfileProps) {
   const [user, setUser] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
-  const [linkedProviders, setLinkedProviders] = useState<string[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
@@ -33,20 +32,12 @@ export default function UserProfile({ onClose }: UserProfileProps) {
     if (currentUser) {
       setUser(currentUser);
       setStats(getUserStats(currentUser.id));
-      setLinkedProviders(getLinkedOAuthProviders());
     }
   };
 
   const handleLogout = () => {
     logoutUser();
     onClose();
-  };
-
-  const handleUnlinkProvider = (providerId: string) => {
-    if (confirm(`¿Estás seguro de que quieres desvincular tu cuenta de ${providerId}?`)) {
-      unlinkOAuthAccount(providerId);
-      loadUserData();
-    }
   };
 
   if (!user || !stats) {
@@ -217,67 +208,26 @@ export default function UserProfile({ onClose }: UserProfileProps) {
         </motion.div>
       </div>
 
-      {/* Cuentas vinculadas */}
-      <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <Link2 className="w-5 h-5 text-blue-400" />
-          Cuentas Vinculadas
-        </h3>
-        <div className="space-y-3">
-          {oauthProviders.map((provider) => {
-            const isLinked = linkedProviders.includes(provider.id);
-            const isPrimary = user.oauthProvider === provider.id;
-            
-            return (
-              <div
-                key={provider.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{provider.icon}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-white">{provider.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {isLinked ? (
-                        isPrimary ? (
-                          <span className="text-green-400">Cuenta principal</span>
-                        ) : (
-                          <span className="text-blue-400">Vinculada</span>
-                        )
-                      ) : (
-                        <span className="text-gray-500">No vinculada</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                
-                {isLinked && !isPrimary && (
-                  <button
-                    onClick={() => handleUnlinkProvider(provider.id)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 text-xs font-medium transition-all"
-                  >
-                    <Unlink className="w-3 h-3" />
-                    Desvincular
-                  </button>
-                )}
-                
-                {!isLinked && (
-                  <button
-                    onClick={() => {
-                      // Aquí iría la lógica para vincular cuenta
-                      alert(`Para vincular ${provider.name}, implementa el flujo OAuth en el backend`);
-                    }}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 text-xs font-medium transition-all"
-                  >
-                    <Link2 className="w-3 h-3" />
-                    Vincular
-                  </button>
-                )}
-              </div>
-            );
-          })}
+      {/* Método de autenticación */}
+      {user.oauthProvider && (
+        <div className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-6">
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-400" />
+            Método de Autenticación
+          </h3>
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+            <span className="text-3xl">
+              {oauthProviders.find(p => p.id === user.oauthProvider)?.icon}
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-white">
+                Conectado con {oauthProviders.find(p => p.id === user.oauthProvider)?.name}
+              </p>
+              <p className="text-xs text-green-400">Cuenta verificada automáticamente</p>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Logros */}
       {user.achievements.length > 0 && (

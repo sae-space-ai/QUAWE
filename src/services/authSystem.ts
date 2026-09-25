@@ -1,14 +1,15 @@
 // Sistema de Autenticación y Gestión de Usuarios
-// Registro con verificación de identidad y contador de tiempo de audiencia
+// Sistema COMPLETAMENTE FUNCIONAL sin dependencias externas
 
 export interface User {
   id: string;
   email: string;
   username: string;
   fullName: string;
-  phone: string;
-  country: string;
-  city: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  password?: string; // Solo para registro tradicional
   registrationDate: number;
   lastLogin: number;
   isVerified: boolean;
@@ -22,6 +23,9 @@ export interface User {
   isPremium?: boolean;
   premiumStartDate?: number;
   premiumEndDate?: number;
+  oauthProvider?: string;
+  oauthAvatar?: string;
+  oauthId?: string;
 }
 
 export interface RedeemedProduct {
@@ -68,7 +72,7 @@ function saveAllUsers(users: User[]): void {
   localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
 }
 
-// Registrar nuevo usuario
+// Registrar nuevo usuario (SIMPLIFICADO - Sin verificación por email)
 export function registerUser(data: RegistrationData): { success: boolean; message: string; userId?: string } {
   const users = getAllUsers();
   
@@ -88,42 +92,41 @@ export function registerUser(data: RegistrationData): { success: boolean; messag
     return { success: false, message: 'Email inválido' };
   }
   
-  // Validar teléfono
-  const phoneRegex = /^[+]?[\d\s-]{10,}$/;
-  if (!phoneRegex.test(data.phone)) {
-    return { success: false, message: 'Número de teléfono inválido' };
+  // Validar contraseña
+  if (data.password.length < 6) {
+    return { success: false, message: 'La contraseña debe tener al menos 6 caracteres' };
   }
   
-  // Crear nuevo usuario
+  // Crear nuevo usuario (VERIFICADO AUTOMÁTICAMENTE)
   const newUser: User = {
     id: generateUserId(),
     email: data.email,
     username: data.username,
     fullName: data.fullName,
-    phone: data.phone,
-    country: data.country,
-    city: data.city,
+    phone: data.phone || '',
+    country: data.country || '',
+    city: data.city || '',
+    password: data.password, // En producción, esto debería hashearse
     registrationDate: Date.now(),
     lastLogin: Date.now(),
-    isVerified: false,
-    verificationCode: generateVerificationCode(),
-    points: 0,
+    isVerified: true, // Verificado automáticamente
+    points: 500, // Bonus de bienvenida
     totalListeningTime: 0,
     currentSessionStart: null,
     level: 1,
-    achievements: [],
+    achievements: ['welcome'],
     redeemedProducts: []
   };
   
   users.push(newUser);
   saveAllUsers(users);
   
-  // En producción, aquí se enviaría el código por email
-  console.log(`[Auth] Código de verificación para ${data.email}: ${newUser.verificationCode}`);
+  // Iniciar sesión automáticamente
+  localStorage.setItem(CURRENT_USER_KEY, newUser.id);
   
   return { 
     success: true, 
-    message: 'Usuario registrado correctamente. Revisa tu email para el código de verificación.',
+    message: '¡Cuenta creada exitosamente! Has recibido 500 puntos de bienvenida.',
     userId: newUser.id
   };
 }
@@ -155,20 +158,18 @@ export function verifyUser(email: string, code: string): { success: boolean; mes
   return { success: true, message: 'Usuario verificado correctamente' };
 }
 
-// Login de usuario
+// Login de usuario (FUNCIONAL)
 export function loginUser(email: string, password: string): { success: boolean; message: string; user?: User } {
   const users = getAllUsers();
   const user = users.find(u => u.email === email);
   
   if (!user) {
-    return { success: false, message: 'Usuario no encontrado' };
+    return { success: false, message: 'No existe una cuenta con este email' };
   }
   
-  // En producción, aquí se verificaría el password hasheado
-  // Por ahora, aceptamos cualquier password para demo
-  
-  if (!user.isVerified) {
-    return { success: false, message: 'Debes verificar tu email antes de iniciar sesión' };
+  // Verificar contraseña (en producción debería hashearse)
+  if (user.password && user.password !== password) {
+    return { success: false, message: 'Contraseña incorrecta' };
   }
   
   // Actualizar último login
@@ -179,7 +180,7 @@ export function loginUser(email: string, password: string): { success: boolean; 
   // Guardar sesión actual
   localStorage.setItem(CURRENT_USER_KEY, user.id);
   
-  return { success: true, message: 'Inicio de sesión exitoso', user: users[userIndex] };
+  return { success: true, message: '¡Bienvenido de nuevo!', user: users[userIndex] };
 }
 
 // Logout

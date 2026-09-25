@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, User, Phone, MapPin, Lock, CheckCircle, AlertCircle } from 'lucide-react';
-import { registerUser, verifyUser, loginUser } from '../services/authSystem';
-import { initiateOAuth, oauthProviders } from '../services/oauthSystem';
+import { X, Mail, User, Lock, CheckCircle, AlertCircle, LogIn, UserPlus } from 'lucide-react';
+import { registerUser, loginUser } from '../services/authSystem';
+import { simulateOAuthLogin, oauthProviders } from '../services/oauthSystem';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
-  const [mode, setMode] = useState<'login' | 'register' | 'verify'>('login');
+  const [mode, setMode] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
@@ -25,20 +25,20 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     username: '',
     password: '',
     confirmPassword: '',
-    fullName: '',
-    phone: '',
-    country: '',
-    city: ''
+    fullName: ''
   });
-  
-  // Verify form
-  const [verifyEmail, setVerifyEmail] = useState('');
-  const [verifyCode, setVerifyCode] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+
+    // Validaciones básicas
+    if (!loginEmail || !loginPassword) {
+      setMessage({ type: 'error', text: 'Por favor completa todos los campos' });
+      setLoading(false);
+      return;
+    }
 
     const result = loginUser(loginEmail, loginPassword);
     
@@ -61,6 +61,12 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
     setMessage(null);
 
     // Validaciones
+    if (!registerData.email || !registerData.username || !registerData.password || !registerData.fullName) {
+      setMessage({ type: 'error', text: 'Por favor completa todos los campos' });
+      setLoading(false);
+      return;
+    }
+
     if (registerData.password !== registerData.confirmPassword) {
       setMessage({ type: 'error', text: 'Las contraseñas no coinciden' });
       setLoading(false);
@@ -78,38 +84,17 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
       username: registerData.username,
       password: registerData.password,
       fullName: registerData.fullName,
-      phone: registerData.phone,
-      country: registerData.country,
-      city: registerData.city
+      phone: '',
+      country: '',
+      city: ''
     });
 
     if (result.success) {
       setMessage({ type: 'success', text: result.message });
-      setVerifyEmail(registerData.email);
       setTimeout(() => {
-        setMode('verify');
-        setMessage(null);
-      }, 2000);
-    } else {
-      setMessage({ type: 'error', text: result.message });
-    }
-
-    setLoading(false);
-  };
-
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-
-    const result = verifyUser(verifyEmail, verifyCode);
-
-    if (result.success) {
-      setMessage({ type: 'success', text: result.message + '. Ya puedes iniciar sesión.' });
-      setTimeout(() => {
-        setMode('login');
-        setMessage(null);
-      }, 2000);
+        onSuccess();
+        onClose();
+      }, 1500);
     } else {
       setMessage({ type: 'error', text: result.message });
     }
@@ -135,11 +120,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">
-              {mode === 'login' && 'Iniciar Sesión'}
-              {mode === 'register' && 'Crear Cuenta'}
-              {mode === 'verify' && 'Verificar Email'}
-            </h2>
+            <div className="flex items-center gap-3">
+              {mode === 'login' ? (
+                <LogIn className="w-6 h-6 text-orange-400" />
+              ) : (
+                <UserPlus className="w-6 h-6 text-orange-400" />
+              )}
+              <h2 className="text-2xl font-bold text-white">
+                {mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
+              </h2>
+            </div>
             <button
               onClick={onClose}
               className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-all"
@@ -170,51 +160,62 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             </motion.div>
           )}
 
-          {/* OAuth Social Login Buttons */}
-          {(mode === 'login' || mode === 'register') && (
-            <div className="mb-6">
-              <div className="relative mb-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10"></div>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-slate-900 px-2 text-gray-400">O continúa con</span>
-                </div>
+          {/* Botones OAuth */}
+          <div className="mb-6">
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10"></div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {oauthProviders.slice(0, 4).map((provider) => (
-                  <motion.button
-                    key={provider.id}
-                    onClick={() => initiateOAuth(provider.id)}
-                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm font-medium text-white"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <span className="text-lg">{provider.icon}</span>
-                    <span>{provider.name}</span>
-                  </motion.button>
-                ))}
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-slate-900 px-2 text-gray-400">Acceso rápido con</span>
               </div>
-
-              {oauthProviders.length > 4 && (
-                <div className="grid grid-cols-1 gap-3 mt-3">
-                  {oauthProviders.slice(4).map((provider) => (
-                    <motion.button
-                      key={provider.id}
-                      onClick={() => initiateOAuth(provider.id)}
-                      className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm font-medium text-white"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <span className="text-lg">{provider.icon}</span>
-                      <span>Continuar con {provider.name}</span>
-                    </motion.button>
-                  ))}
-                </div>
-              )}
             </div>
-          )}
+
+            <div className="grid grid-cols-5 gap-2">
+              {oauthProviders.map((provider) => (
+                <motion.button
+                  key={provider.id}
+                  onClick={() => {
+                    setLoading(true);
+                    setMessage(null);
+                    
+                    // Simular delay de autenticación
+                    setTimeout(() => {
+                      const result = simulateOAuthLogin(provider.id);
+                      
+                      if (result.success) {
+                        setMessage({ type: 'success', text: result.message });
+                        setTimeout(() => {
+                          onSuccess();
+                          onClose();
+                        }, 1500);
+                      } else {
+                        setMessage({ type: 'error', text: result.message });
+                        setLoading(false);
+                      }
+                    }, 800);
+                  }}
+                  className="flex flex-col items-center justify-center gap-1 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title={`Continuar con ${provider.name}`}
+                >
+                  <span className="text-2xl">{provider.icon}</span>
+                  <span className="text-[10px] text-gray-400">{provider.name}</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          {/* Separador */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-slate-900 px-2 text-gray-400">O usa tu email</span>
+            </div>
+          </div>
 
           {/* Login Form */}
           {mode === 'login' && (
@@ -227,7 +228,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     type="email"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-all"
                     placeholder="tu@email.com"
                     required
                   />
@@ -242,7 +243,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     type="password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-all"
                     placeholder="••••••••"
                     required
                   />
@@ -252,36 +253,66 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold hover:shadow-lg hover:shadow-orange-500/30 transition-all disabled:opacity-50"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold hover:shadow-lg hover:shadow-orange-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                {loading ? (
+                  <>
+                    <motion.div
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    />
+                    Iniciando sesión...
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-5 h-5" />
+                    Iniciar Sesión
+                  </>
+                )}
               </button>
 
-              <div className="relative my-4">
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-slate-900 px-2 text-gray-400">O usa tu email</span>
+                  <span className="bg-slate-900 px-2 text-gray-400">¿Nuevo aquí?</span>
                 </div>
               </div>
 
-              <p className="text-sm text-gray-400 text-center">
-                ¿No tienes cuenta?{' '}
-                <button
-                  type="button"
-                  onClick={() => setMode('register')}
-                  className="text-orange-400 hover:text-orange-300 font-semibold"
-                >
-                  Regístrate aquí
-                </button>
-              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('register');
+                  setMessage(null);
+                }}
+                className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-5 h-5" />
+                Crear Cuenta Nueva
+              </button>
             </form>
           )}
 
           {/* Register Form */}
           {mode === 'register' && (
             <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">Nombre completo</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="text"
+                    value={registerData.fullName}
+                    onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-all"
+                    placeholder="Juan Pérez"
+                    required
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm text-gray-400 mb-2 block">Email</label>
                 <div className="relative">
@@ -290,7 +321,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     type="email"
                     value={registerData.email}
                     onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-all"
                     placeholder="tu@email.com"
                     required
                   />
@@ -305,60 +336,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     type="text"
                     value={registerData.username}
                     onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                    placeholder="tu_usuario"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Nombre completo</label>
-                <input
-                  type="text"
-                  value={registerData.fullName}
-                  onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                  placeholder="Juan Pérez García"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Teléfono</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                  <input
-                    type="tel"
-                    value={registerData.phone}
-                    onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                    placeholder="+34 600 000 000"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm text-gray-400 mb-2 block">País</label>
-                  <input
-                    type="text"
-                    value={registerData.country}
-                    onChange={(e) => setRegisterData({ ...registerData, country: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                    placeholder="España"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-gray-400 mb-2 block">Ciudad</label>
-                  <input
-                    type="text"
-                    value={registerData.city}
-                    onChange={(e) => setRegisterData({ ...registerData, city: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                    placeholder="Madrid"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-all"
+                    placeholder="juanperez"
                     required
                   />
                 </div>
@@ -366,99 +345,129 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
               <div>
                 <label className="text-sm text-gray-400 mb-2 block">Contraseña</label>
-                <input
-                  type="password"
-                  value={registerData.password}
-                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="password"
+                    value={registerData.password}
+                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-all"
+                    placeholder="Mínimo 6 caracteres"
+                    required
+                    minLength={6}
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="text-sm text-gray-400 mb-2 block">Confirmar contraseña</label>
-                <input
-                  type="password"
-                  value={registerData.confirmPassword}
-                  onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                  placeholder="Repite tu contraseña"
-                  required
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="password"
+                    value={registerData.confirmPassword}
+                    onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-all"
+                    placeholder="Repite tu contraseña"
+                    required
+                    minLength={6}
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold hover:shadow-lg hover:shadow-orange-500/30 transition-all disabled:opacity-50"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold hover:shadow-lg hover:shadow-orange-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? 'Registrando...' : 'Crear Cuenta'}
+                {loading ? (
+                  <>
+                    <motion.div
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    />
+                    Creando cuenta...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="w-5 h-5" />
+                    Crear Cuenta
+                  </>
+                )}
               </button>
 
-              <div className="relative my-4">
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3">
+                <p className="text-xs text-blue-300 text-center">
+                  🎁 ¡Obtén 500 puntos de bienvenida al registrarte!
+                </p>
+              </div>
+
+              {/* Botones OAuth para registro */}
+              <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-white/10"></div>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-slate-900 px-2 text-gray-400">O usa tu email</span>
+                  <span className="bg-slate-900 px-2 text-gray-400">O regístrate con</span>
                 </div>
               </div>
 
-              <p className="text-sm text-gray-400 text-center">
-                ¿Ya tienes cuenta?{' '}
-                <button
-                  type="button"
-                  onClick={() => setMode('login')}
-                  className="text-orange-400 hover:text-orange-300 font-semibold"
-                >
-                  Inicia sesión
-                </button>
-              </p>
-            </form>
-          )}
-
-          {/* Verify Form */}
-          {mode === 'verify' && (
-            <form onSubmit={handleVerify} className="space-y-4">
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-4">
-                <p className="text-sm text-blue-300">
-                  Hemos enviado un código de verificación a <strong>{verifyEmail}</strong>. 
-                  Revisa tu bandeja de entrada y spam.
-                </p>
+              <div className="grid grid-cols-5 gap-2">
+                {oauthProviders.map((provider) => (
+                  <motion.button
+                    key={provider.id}
+                    onClick={() => {
+                      setLoading(true);
+                      setMessage(null);
+                      
+                      // Simular delay de autenticación
+                      setTimeout(() => {
+                        const result = simulateOAuthLogin(provider.id);
+                        
+                        if (result.success) {
+                          setMessage({ type: 'success', text: result.message });
+                          setTimeout(() => {
+                            onSuccess();
+                            onClose();
+                          }, 1500);
+                        } else {
+                          setMessage({ type: 'error', text: result.message });
+                          setLoading(false);
+                        }
+                      }, 800);
+                    }}
+                    className="flex flex-col items-center justify-center gap-1 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    title={`Registrarse con ${provider.name}`}
+                  >
+                    <span className="text-2xl">{provider.icon}</span>
+                    <span className="text-[10px] text-gray-400">{provider.name}</span>
+                  </motion.button>
+                ))}
               </div>
 
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Código de verificación</label>
-                <input
-                  type="text"
-                  value={verifyCode}
-                  onChange={(e) => setVerifyCode(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-center text-2xl font-mono tracking-widest placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-                  placeholder="000000"
-                  maxLength={6}
-                  required
-                />
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-slate-900 px-2 text-gray-400">¿Ya tienes cuenta?</span>
+                </div>
               </div>
 
               <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 text-white font-semibold hover:shadow-lg hover:shadow-orange-500/30 transition-all disabled:opacity-50"
+                type="button"
+                onClick={() => {
+                  setMode('login');
+                  setMessage(null);
+                }}
+                className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold transition-all flex items-center justify-center gap-2"
               >
-                {loading ? 'Verificando...' : 'Verificar Email'}
+                <LogIn className="w-5 h-5" />
+                Iniciar Sesión
               </button>
-
-              <p className="text-sm text-gray-400 text-center">
-                ¿Ya estás verificado?{' '}
-                <button
-                  type="button"
-                  onClick={() => setMode('login')}
-                  className="text-orange-400 hover:text-orange-300 font-semibold"
-                >
-                  Inicia sesión
-                </button>
-              </p>
             </form>
           )}
         </motion.div>
