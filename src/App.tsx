@@ -17,10 +17,10 @@ import {
 } from './services/radioApi';
 import { genres, localAds, chatMessages, scheduleItems, sleepTimerOptions, popularCountries } from './data/constants';
 import { Station } from './types';
-import PulsarLogo from './components/PulsarLogo';
-import PulsarOriginal from './components/PulsarOriginal';
+import QuaweLogo from './components/QuaweLogo';
+import QuaweOriginal from './components/QuaweOriginal';
 import LocalStationsGrid from './components/LocalStationsGrid';
-import { localPulsarStations, getLocalStation, LocalPulsarStation } from './data/localStations';
+import { localQuaweStations, getLocalStation, LocalQuaweStation } from './data/quaweStations';
 import { getUserTracks, getTrackStreamUrl } from './services/audiusApi';
 
 // ============================================
@@ -125,10 +125,10 @@ export default function App() {
   const location = useGeolocation();
   const { audioRef, getAnalyserData } = useAudioPlayer();
 
-  // Crear estación especial PULSAR Original
-  const pulsarOriginalStation: Station = {
-    stationuuid: 'pulsar-original',
-    name: 'PULSAR Original',
+  // Crear estación especial Quawe Original
+  const quaweOriginalStation: Station = {
+    stationuuid: 'quawe-original',
+    name: 'Quawe Original',
     url: '',
     url_resolved: '',
     homepage: 'https://audius.co/profmanuelgago',
@@ -186,30 +186,30 @@ export default function App() {
     }
   };
 
-  // Cargar solo las emisoras PULSAR propias
-  const loadPulsarStations = () => {
+  // Cargar solo las emisoras Quawe propias
+  const loadQuaweStations = () => {
     setLoading(true);
-    // Solo PULSAR Original + 10 estaciones locales
-    const localStations = localPulsarStations.map((ls) => ls.station);
-    setStations([pulsarOriginalStation, ...localStations]);
+    // Solo Quawe Original + 100 estaciones locales
+    const localStations = localQuaweStations.map((ls) => ls.station);
+    setStations([quaweOriginalStation, ...localStations]);
     setLoading(false);
   };
 
   // Cargar emisoras al inicio
   useEffect(() => {
-    loadPulsarStations();
+    loadQuaweStations();
   }, []);
 
-  // Búsqueda simple en las emisoras PULSAR
+  // Búsqueda simple en las emisoras Quawe
   const handleSearch = (query: string) => {
     if (!query.trim()) {
-      loadPulsarStations();
+      loadQuaweStations();
       return;
     }
     
     setLoading(true);
-    const localStations = localPulsarStations.map((ls) => ls.station);
-    const allStations = [pulsarOriginalStation, ...localStations];
+    const localStations = localQuaweStations.map((ls) => ls.station);
+    const allStations = [quaweOriginalStation, ...localStations];
     
     const filtered = allStations.filter((station) =>
       station.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -221,14 +221,14 @@ export default function App() {
     setLoading(false);
   };
 
-  // Filtro por género (solo en tags de PULSAR)
+  // Filtro por género (solo en tags de Quawe)
   const handleGenreSelect = (genre: string) => {
     setSelectedGenre(genre);
     setSelectedCountry(null);
     setLoading(true);
     
-    const localStations = localPulsarStations.map((ls) => ls.station);
-    const allStations = [pulsarOriginalStation, ...localStations];
+    const localStations = localQuaweStations.map((ls) => ls.station);
+    const allStations = [quaweOriginalStation, ...localStations];
     
     const filtered = allStations.filter((station) =>
       station.tags.toLowerCase().includes(genre.toLowerCase())
@@ -238,14 +238,14 @@ export default function App() {
     setLoading(false);
   };
 
-  // Filtro por país (solo en PULSAR)
+  // Filtro por país (solo en Quawe)
   const handleCountrySelect = (countryCode: string) => {
     setSelectedCountry(countryCode);
     setSelectedGenre(null);
     setLoading(true);
     
-    const localStations = localPulsarStations.map((ls) => ls.station);
-    const allStations = [pulsarOriginalStation, ...localStations];
+    const localStations = localQuaweStations.map((ls) => ls.station);
+    const allStations = [quaweOriginalStation, ...localStations];
     
     const filtered = allStations.filter((station) =>
       station.countrycode === countryCode
@@ -256,9 +256,9 @@ export default function App() {
   };
 
   const handleStationClick = async (station: Station) => {
-    // Si es PULSAR Original o cualquier emisora local PULSAR
-    if (station.stationuuid === 'pulsar-original' || 
-        (station.stationuuid.startsWith('pulsar-') && station.stationuuid !== 'pulsar-original')) {
+    // Si es Quawe Original o cualquier emisora local Quawe
+    if (station.stationuuid === 'quawe-original' || 
+        (station.stationuuid.startsWith('quawe-') && station.stationuuid !== 'quawe-original')) {
       
       // Ocultar vista de red local
       setShowLocalStations(false);
@@ -297,7 +297,7 @@ export default function App() {
     }
   };
 
-  const handleLocalStationClick = async (localStation: LocalPulsarStation) => {
+  const handleLocalStationClick = async (localStation: LocalQuaweStation) => {
     // Al hacer clic en una estación local, reproducir música de Audius
     setShowLocalStations(false);
     
@@ -356,7 +356,7 @@ export default function App() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <PulsarLogo size={56} animated={true} showText={true} />
+              <QuaweLogo size={56} animated={true} showText={true} />
 
               {/* Toggle Red Local */}
               <button
@@ -392,9 +392,9 @@ export default function App() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         {showLocalStations ? (
-          // Red PULSAR Local - 10 ciudades geolocalizadas
+          // Red Quawe Local - 100 ciudades geolocalizadas
           <LocalStationsGrid
-            stations={localPulsarStations}
+            stations={localQuaweStations}
             onStationClick={handleLocalStationClick}
             userCity={location.city}
           />
@@ -592,13 +592,13 @@ export default function App() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-white">
                   {selectedGenre
-                    ? `PULSAR ${genres.find((g) => g.id === selectedGenre)?.name}`
+                    ? `QUAWE ${genres.find((g) => g.id === selectedGenre)?.name}`
                     : selectedCountry
-                    ? `PULSAR ${popularCountries.find((c) => c.code === selectedCountry)?.name}`
-                    : 'Red PULSAR'}
+                    ? `QUAWE ${popularCountries.find((c) => c.code === selectedCountry)?.name}`
+                    : 'Red QUAWE'}
                 </h2>
                 <button
-                  onClick={loadPulsarStations}
+                  onClick={loadQuaweStations}
                   className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -612,8 +612,8 @@ export default function App() {
               ) : (
                 <div className="space-y-2">
                   {stations.map((station) => {
-                    const isPulsarOriginal = station.stationuuid === 'pulsar-original';
-                    const isLocalPulsar = station.stationuuid.startsWith('pulsar-') && station.stationuuid !== 'pulsar-original';
+                    const isPulsarOriginal = station.stationuuid === 'quawe-original';
+                    const isLocalPulsar = station.stationuuid.startsWith('quawe-') && station.stationuuid !== 'quawe-original';
                     
                     return (
                       <motion.button
@@ -633,14 +633,14 @@ export default function App() {
                       >
                         <div className="flex items-center gap-3">
                           {isPulsarOriginal ? (
-                            // Logo especial para PULSAR Original
+                            // Logo especial para Quawe Original
                             <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-orange-500 to-pink-600 shadow-lg">
-                              <PulsarLogo size={40} animated={false} />
+                              <QuaweLogo size={40} animated={false} />
                             </div>
                           ) : isLocalPulsar ? (
-                            // Logo especial para estaciones locales PULSAR
+                            // Logo especial para estaciones locales Quawe
                             <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
-                              <PulsarLogo size={40} animated={false} />
+                              <QuaweLogo size={40} animated={false} />
                             </div>
                           ) : (
                             <div

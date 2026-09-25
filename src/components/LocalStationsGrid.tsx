@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { MapPin, Users, Radio, Globe } from 'lucide-react';
-import { LocalPulsarStation, networkStats } from '../data/localStations';
-import PulsarLogo from './PulsarLogo';
+import { LocalQuaweStation, networkStats } from '../data/quaweStations';
+import QuaweLogo from './QuaweLogo';
 
 interface LocalStationsGridProps {
-  stations: LocalPulsarStation[];
-  onStationClick: (station: LocalPulsarStation) => void;
+  stations: LocalQuaweStation[];
+  onStationClick: (station: LocalQuaweStation) => void;
   userCity?: string;
 }
 
@@ -21,8 +21,8 @@ export default function LocalStationsGrid({ stations, onStationClick, userCity }
         <div className="flex items-center gap-3 mb-4">
           <Globe className="w-6 h-6 text-orange-400" />
           <div>
-            <h2 className="text-xl font-bold text-white">Red PULSAR Local</h2>
-            <p className="text-sm text-gray-400">10 ciudades • Tu música en todo el mundo hispano</p>
+            <h2 className="text-xl font-bold text-white">Red QUAWE Local</h2>
+            <p className="text-sm text-gray-400">100 ciudades • Tu música en todo el mundo hispano</p>
           </div>
         </div>
 
@@ -83,7 +83,7 @@ export default function LocalStationsGrid({ stations, onStationClick, userCity }
                 {/* Logo de la estación */}
                 <div className="flex-shrink-0">
                   <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center shadow-lg">
-                    <PulsarLogo size={48} animated={false} />
+                    <QuaweLogo size={48} animated={false} />
                   </div>
                 </div>
 
