@@ -38,6 +38,7 @@ import ProductCatalog from './components/ProductCatalog';
 import UserProfile from './components/UserProfile';
 import AuthModal from './components/AuthModal';
 import PremiumModal from './components/PremiumModal';
+import AdShowcase from './components/AdShowcase';
 import { earnPointsForListening } from './services/pointsSystem';
 import { startAdScheduler, stopAdScheduler, pauseAdScheduler, resumeAdScheduler } from './services/adScheduler';
 import { getCurrentUser, startListeningSession, stopListeningSession } from './services/authSystem';
@@ -134,6 +135,7 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [showAdShowcase, setShowAdShowcase] = useState(false);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(!!getCurrentUser());
   const [isPremium, setIsPremium] = useState(false);
 
@@ -783,6 +785,12 @@ export default function App() {
                   >
                     {isPremium ? '👑 Premium' : '⭐ Premium'}
                   </button>
+                  <button
+                    onClick={() => setShowAdShowcase(true)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
+                  >
+                    🎁 Escaparate
+                  </button>
                 </>
               ) : (
                 <button
@@ -1370,6 +1378,12 @@ export default function App() {
           setIsPremium(true);
           setShowPremiumModal(false);
         }}
+      />
+
+      {/* Escaparate Publicitario */}
+      <AdShowcase
+        isOpen={showAdShowcase}
+        onClose={() => setShowAdShowcase(false)}
       />
     </div>
   );
